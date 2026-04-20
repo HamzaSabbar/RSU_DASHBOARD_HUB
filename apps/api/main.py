@@ -11,6 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from auth.hashing import hash_password
+from auth.router import router as auth_router
+from boards.router import router as boards_router
 from config import settings
 from db.models import Board, User
 from db.session import SessionLocal
@@ -74,6 +76,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(auth_router)
+app.include_router(boards_router)
 
 
 @app.get("/health")
