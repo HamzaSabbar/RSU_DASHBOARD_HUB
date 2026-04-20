@@ -12,6 +12,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from auth.hashing import hash_password
 from auth.router import router as auth_router
+from boards.registry import discover_boards
 from boards.router import router as boards_router
 from config import settings
 from db.models import Board, User
@@ -80,6 +81,9 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(boards_router)
+
+for spec in discover_boards().values():
+    app.include_router(spec.router, prefix=f"/api/boards/{spec.slug}")
 
 
 @app.get("/health")
