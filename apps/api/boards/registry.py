@@ -16,7 +16,7 @@ class BoardSpec:
     slug: str
     title: str
     description: str
-    expected_files: list["ExpectedFile"]
+    expected_files: list[ExpectedFile]
     router: APIRouter
 
 

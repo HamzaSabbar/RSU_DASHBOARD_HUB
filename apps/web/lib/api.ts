@@ -19,8 +19,9 @@ type FetchOptions = Omit<RequestInit, "body"> & {
 };
 
 export async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const session = await auth();
-  if (!session?.accessToken) {
+  const session = (await auth()) as (Record<string, unknown> | null);
+  const accessToken = session?.accessToken as string | undefined;
+  if (!accessToken) {
     throw new ApiError("unauthenticated", 401, null);
   }
 
@@ -34,7 +35,7 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   const res = await fetch(url, {
     ...options,
     headers: {
-      Authorization: `Bearer ${session.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       ...(options.body && !(options.body instanceof FormData)
         ? { "Content-Type": "application/json" }
         : {}),

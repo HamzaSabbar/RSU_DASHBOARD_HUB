@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 
-import pandas as pd
 from openpyxl import Workbook
 
 from boards.macro_national import analytics, parser

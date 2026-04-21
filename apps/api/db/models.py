@@ -59,8 +59,8 @@ class Board(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    uploads: Mapped[list["Upload"]] = relationship(back_populates="board")
-    snapshots: Mapped[list["BoardSnapshot"]] = relationship(back_populates="board")
+    uploads: Mapped[list[Upload]] = relationship(back_populates="board")
+    snapshots: Mapped[list[BoardSnapshot]] = relationship(back_populates="board")
 
 
 class Upload(Base):

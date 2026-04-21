@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from config import settings
-from db.base import Base
 from db import models  # noqa: F401  (import so metadata is populated)
+from db.base import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url_sync)

@@ -49,7 +49,7 @@ def parse_inscriptions_rnp(content: bytes) -> pd.DataFrame:
     for col_idx in range(1, raw.shape[1]):
         y = row0[col_idx]
         m = row1[col_idx]
-        if isinstance(y, (int, float)) and not pd.isna(y):
+        if isinstance(y, int | float) and not pd.isna(y):
             current_year = int(y)
         elif isinstance(y, str) and y.strip().isdigit():
             current_year = int(y.strip())

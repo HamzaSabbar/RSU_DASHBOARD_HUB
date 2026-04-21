@@ -1,34 +1,11 @@
-import NextAuth, { type DefaultSession } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-declare module "next-auth" {
-  interface Session {
-    accessToken: string;
-    user: DefaultSession["user"] & {
-      id: string;
-      role: string;
-    };
-  }
+const API_URL_INTERNAL =
+  process.env.API_URL_INTERNAL ?? "http://api:8000";
 
-  interface User {
-    id: string;
-    email: string;
-    role: string;
-    accessToken: string;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    accessToken: string;
-    role: string;
-    userId: string;
-  }
-}
-
-const API_URL = process.env.API_URL_INTERNAL ?? "http://api:8000";
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
@@ -39,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const res = await fetch(`${API_URL}/api/auth/login`, {
+        const res = await fetch(`${API_URL_INTERNAL}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -58,24 +35,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: data.user.email,
           role: data.user.role,
           accessToken: data.access_token,
-        };
+        } as unknown as { id: string; email: string; name?: string };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = user.accessToken;
-        token.role = user.role;
-        token.userId = user.id;
+        const u = user as unknown as {
+          id: string;
+          role: string;
+          accessToken: string;
+        };
+        (token as Record<string, unknown>).accessToken = u.accessToken;
+        (token as Record<string, unknown>).role = u.role;
+        (token as Record<string, unknown>).userId = u.id;
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.user.role = token.role;
-      session.user.id = token.userId;
+      const t = token as unknown as Record<string, unknown>;
+      const s = session as unknown as Record<string, unknown> & {
+        user?: Record<string, unknown>;
+      };
+      s.accessToken = t.accessToken;
+      if (s.user) {
+        s.user.id = t.userId;
+        s.user.role = t.role;
+      }
       return session;
     },
   },
-});
+};
+
+export function auth() {
+  return getServerSession(authOptions);
+}

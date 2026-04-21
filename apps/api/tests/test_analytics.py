@@ -34,7 +34,7 @@ def test_monthly_evolution_is_chronological_with_deltas(inscriptions_xlsx_bytes:
     months = [p.month for p in points]
     assert months == sorted(months)
     assert points[0].delta is None
-    for prev, curr in zip(points, points[1:]):
+    for prev, curr in zip(points, points[1:], strict=False):
         assert curr.delta == curr.value - prev.value
 
 

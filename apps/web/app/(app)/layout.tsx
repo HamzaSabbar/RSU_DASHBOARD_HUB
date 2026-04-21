@@ -21,7 +21,7 @@ export default async function AppLayout({
               RSU Dashboard Hub
             </span>
           </Link>
-          <UserMenu email={session.user.email ?? ""} />
+          <UserMenu email={session.user?.email ?? ""} />
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
