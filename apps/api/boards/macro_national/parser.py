@@ -89,6 +89,65 @@ def parse_inscriptions_rnp(content: bytes) -> pd.DataFrame:
     return pd.DataFrame(data_rows)
 
 
+def _read_single_sheet(content: bytes) -> pd.DataFrame:
+    return pd.read_excel(io.BytesIO(content), sheet_name=0, engine="openpyxl")
+
+
+def parse_traitement_fms(content: bytes) -> pd.DataFrame:
+    df = _read_single_sheet(content)
+    df.columns = [str(c).strip().lower().replace(" ", "_") for c in df.columns]
+    required = {"type_famille", "niveau_risque", "doute_confirme", "doute_leve"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"colonnes manquantes: {sorted(missing)}")
+    df["type_famille"] = df["type_famille"].astype(str).str.strip()
+    df["niveau_risque"] = df["niveau_risque"].astype(str).str.strip()
+    df["doute_confirme"] = pd.to_numeric(df["doute_confirme"], errors="coerce").fillna(0).astype(int)
+    df["doute_leve"] = pd.to_numeric(df["doute_leve"], errors="coerce").fillna(0).astype(int)
+    return df[["type_famille", "niveau_risque", "doute_confirme", "doute_leve"]]
+
+
+def parse_flux_regions(content: bytes) -> pd.DataFrame:
+    df = _read_single_sheet(content)
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    required = {"region", "entrants", "sortants"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"colonnes manquantes: {sorted(missing)}")
+    df["region"] = df["region"].astype(str).str.strip()
+    df["entrants"] = pd.to_numeric(df["entrants"], errors="coerce").fillna(0).astype(int)
+    df["sortants"] = pd.to_numeric(df["sortants"], errors="coerce").fillna(0).astype(int)
+    return df[["region", "entrants", "sortants"]]
+
+
+def parse_menages_bloques_regions(content: bytes) -> pd.DataFrame:
+    df = _read_single_sheet(content)
+    df.columns = [str(c).strip().lower().replace(" ", "_") for c in df.columns]
+    if "region" not in df.columns or "bloques" not in df.columns:
+        raise ValueError("colonnes manquantes: region, bloques")
+    df["region"] = df["region"].astype(str).str.strip()
+    df["bloques"] = pd.to_numeric(df["bloques"], errors="coerce").fillna(0).astype(int)
+    for c in ("fms_fraude", "multi_noyau_procedure", "individuel_procedure"):
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+        else:
+            df[c] = 0
+    return df[["region", "bloques", "fms_fraude", "multi_noyau_procedure", "individuel_procedure"]]
+
+
+def parse_economie_budgetaire(content: bytes) -> dict[str, int]:
+    df = _read_single_sheet(content)
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    if {"fraude", "rescoring", "total"}.issubset(df.columns) and not df.empty:
+        row = df.iloc[0]
+        return {
+            "fraude": int(float(row["fraude"])),
+            "rescoring": int(float(row["rescoring"])),
+            "total": int(float(row["total"])),
+        }
+    raise ValueError("schéma attendu: colonnes fraude, rescoring, total sur une ligne")
+
+
 def detect_file_kind(filename: str, content: bytes) -> FileKind | None:
     """Sniff the first sheet for known markers."""
     name = filename.lower()

@@ -40,16 +40,26 @@ async def persist_upload(
     row_count: int | None = None
     error: str | None = None
 
+    parsers = {
+        FileKind.INSCRIPTIONS_RNP: parser.parse_inscriptions_rnp,
+        FileKind.TRAITEMENT_FMS: parser.parse_traitement_fms,
+        FileKind.FLUX_REGIONS: parser.parse_flux_regions,
+        FileKind.MENAGES_BLOQUES_REGIONS: parser.parse_menages_bloques_regions,
+        FileKind.ECONOMIE_BUDGETAIRE: parser.parse_economie_budgetaire,
+    }
     if file_kind is None:
         error = "type de fichier non reconnu"
-    elif file_kind == FileKind.INSCRIPTIONS_RNP:
-        try:
-            df = parser.parse_inscriptions_rnp(content)
-            row_count = int(df.shape[0])
-        except Exception as exc:  # noqa: BLE001
-            error = f"parse inscriptions: {exc}"
+    elif file_kind not in parsers:
+        error = f"parseur non implémenté pour {file_kind.value}"
     else:
-        error = f"parseur non encore implémenté pour {file_kind.value}"
+        try:
+            parsed = parsers[file_kind](content)
+            if hasattr(parsed, "shape"):
+                row_count = int(parsed.shape[0])
+            elif isinstance(parsed, dict):
+                row_count = len(parsed)
+        except Exception as exc:  # noqa: BLE001
+            error = f"parse {file_kind.value}: {exc}"
 
     stored_name = f"{uuid.uuid4()}_{original_filename}"
     stored_path = target_dir / stored_name
@@ -107,6 +117,33 @@ async def recompute_snapshot(session: AsyncSession, *, user: User) -> MacroNatio
         payload.inscriptions_kpis = analytics.compute_inscriptions_kpis(df)
         payload.monthly_evolution = analytics.compute_monthly_evolution(df)
         payload.top_provinces_inscriptions = analytics.compute_top_provinces(df, k=5)
+
+    fms_path = latest_by_kind.get(FileKind.TRAITEMENT_FMS.value)
+    if fms_path:
+        content = Path(fms_path).read_bytes()
+        df = parser.parse_traitement_fms(content)
+        payload.fms_kpis = analytics.compute_fms_kpis(df)
+        payload.fms_buckets = analytics.compute_fms_buckets(df)
+
+    flux_path = latest_by_kind.get(FileKind.FLUX_REGIONS.value)
+    if flux_path:
+        content = Path(flux_path).read_bytes()
+        df = parser.parse_flux_regions(content)
+        payload.region_flux = analytics.compute_region_flux(df)
+
+    bloques_path = latest_by_kind.get(FileKind.MENAGES_BLOQUES_REGIONS.value)
+    if bloques_path:
+        content = Path(bloques_path).read_bytes()
+        df = parser.parse_menages_bloques_regions(content)
+        payload.region_bloques = analytics.compute_region_bloques(df)
+        payload.menages_bloques_categories = analytics.compute_menages_bloques_categories(df)
+        payload.top_provinces_bloques = analytics.compute_top_bloques_regions(df, k=5)
+
+    economie_path = latest_by_kind.get(FileKind.ECONOMIE_BUDGETAIRE.value)
+    if economie_path:
+        content = Path(economie_path).read_bytes()
+        values = parser.parse_economie_budgetaire(content)
+        payload.economie_budgetaire = analytics.compute_economie_budgetaire(values)
 
     payload.reporting_date = date.today().isoformat()
 

@@ -6,6 +6,9 @@ import { Section } from "@/components/section";
 import { EvolutionLineChart } from "@/components/line-chart";
 import { DataTable } from "@/components/data-table";
 import { UploadDrawer } from "@/components/upload-drawer";
+import { FMSStackedBar } from "@/components/stacked-bar";
+import { VerticalBarChart } from "@/components/vertical-bar";
+import { HorizontalBarChart } from "@/components/horizontal-bar";
 import { Card } from "@/components/ui/card";
 import { formatBigNumber } from "@/lib/format";
 
@@ -214,9 +217,9 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
         <h3 className="text-sm font-semibold text-brand-dark">
           Résultats des traitements FMS par niveau de risque
         </h3>
-        {data.fms_buckets?.length ? (
-          <div className="mt-4 text-xs text-brand-muted">
-            {data.fms_buckets.length} buckets.
+        {data.fms_buckets && data.fms_buckets.length > 0 ? (
+          <div className="mt-4">
+            <FMSStackedBar buckets={data.fms_buckets} />
           </div>
         ) : (
           <NoData className="mt-4" />
@@ -225,9 +228,18 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
 
       <Card className="p-5">
         <h3 className="text-sm font-semibold text-brand-dark">Ménages bloqués</h3>
-        {data.menages_bloques_categories?.length ? (
-          <div className="mt-4 text-xs text-brand-muted">
-            {data.menages_bloques_categories.length} catégories.
+        {data.menages_bloques_categories &&
+        data.menages_bloques_categories.length > 0 ? (
+          <div className="mt-4">
+            <VerticalBarChart
+              data={data.menages_bloques_categories.map((c) => ({
+                category: c.category,
+                count: c.count,
+              }))}
+              labelKey="category"
+              valueKey="count"
+              color="#DC2626"
+            />
           </div>
         ) : (
           <NoData className="mt-4" />
@@ -238,9 +250,20 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
         <h3 className="text-sm font-semibold text-brand-dark">
           Entrants / Sortants ASD + AMO Tadamon par région
         </h3>
-        {data.region_flux?.length ? (
-          <div className="mt-4 text-xs text-brand-muted">
-            {data.region_flux.length} régions.
+        {data.region_flux && data.region_flux.length > 0 ? (
+          <div className="mt-4">
+            <HorizontalBarChart
+              data={data.region_flux.map((r) => ({
+                region: r.region,
+                entrants: r.entrants,
+                sortants: r.sortants,
+              }))}
+              labelKey="region"
+              series={[
+                { dataKey: "entrants", name: "Entrants", color: "#16A34A" },
+                { dataKey: "sortants", name: "Sortants", color: "#DC2626" },
+              ]}
+            />
           </div>
         ) : (
           <NoData className="mt-4" />
@@ -251,9 +274,18 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
         <h3 className="text-sm font-semibold text-brand-dark">
           Ménages bloqués par région
         </h3>
-        {data.region_bloques?.length ? (
-          <div className="mt-4 text-xs text-brand-muted">
-            {data.region_bloques.length} régions.
+        {data.region_bloques && data.region_bloques.length > 0 ? (
+          <div className="mt-4">
+            <HorizontalBarChart
+              data={data.region_bloques.map((r) => ({
+                region: r.region,
+                bloques: r.bloques,
+              }))}
+              labelKey="region"
+              series={[
+                { dataKey: "bloques", name: "Ménages bloqués", color: "#0F7B3F" },
+              ]}
+            />
           </div>
         ) : (
           <NoData className="mt-4" />

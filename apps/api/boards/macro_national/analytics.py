@@ -3,9 +3,15 @@ from __future__ import annotations
 import pandas as pd
 
 from boards.macro_national.schemas import (
+    EconomieBudgetaire,
+    FMSBucket,
+    FMSKPIs,
     InscriptionsKPIs,
+    MenagesBloquesCategory,
     MonthlyPoint,
     ProvinceRanking,
+    RegionBloques,
+    RegionFlux,
 )
 
 
@@ -63,6 +69,82 @@ def compute_monthly_evolution(df: pd.DataFrame) -> list[MonthlyPoint]:
         )
         prev_value = value
     return points
+
+
+def compute_fms_kpis(df: pd.DataFrame) -> FMSKPIs:
+    if df.empty:
+        return FMSKPIs(demandes_traitees=0, doute_confirme=0, doute_leve=0)
+    confirme = int(df["doute_confirme"].sum())
+    leve = int(df["doute_leve"].sum())
+    return FMSKPIs(
+        demandes_traitees=confirme + leve,
+        doute_confirme=confirme,
+        doute_leve=leve,
+    )
+
+
+def compute_fms_buckets(df: pd.DataFrame) -> list[FMSBucket]:
+    return [
+        FMSBucket(
+            type_famille=str(row["type_famille"]),
+            niveau_risque=str(row["niveau_risque"]),
+            doute_confirme=int(row["doute_confirme"]),
+            doute_leve=int(row["doute_leve"]),
+        )
+        for _, row in df.iterrows()
+    ]
+
+
+def compute_region_flux(df: pd.DataFrame) -> list[RegionFlux]:
+    return [
+        RegionFlux(
+            region=str(row["region"]),
+            entrants=int(row["entrants"]),
+            sortants=int(row["sortants"]),
+        )
+        for _, row in df.iterrows()
+    ]
+
+
+def compute_menages_bloques_categories(df: pd.DataFrame) -> list[MenagesBloquesCategory]:
+    if df.empty:
+        return []
+    return [
+        MenagesBloquesCategory(category="FMS fraude", count=int(df["fms_fraude"].sum())),
+        MenagesBloquesCategory(
+            category="Multi-noyau procédure",
+            count=int(df["multi_noyau_procedure"].sum()),
+        ),
+        MenagesBloquesCategory(
+            category="Individuel procédure",
+            count=int(df["individuel_procedure"].sum()),
+        ),
+    ]
+
+
+def compute_region_bloques(df: pd.DataFrame) -> list[RegionBloques]:
+    return [
+        RegionBloques(region=str(row["region"]), bloques=int(row["bloques"]))
+        for _, row in df.iterrows()
+    ]
+
+
+def compute_top_bloques_regions(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]:
+    if df.empty:
+        return []
+    top = df.sort_values("bloques", ascending=False).head(k)
+    return [
+        ProvinceRanking(province=str(row["region"]), value=int(row["bloques"]))
+        for _, row in top.iterrows()
+    ]
+
+
+def compute_economie_budgetaire(values: dict[str, int]) -> EconomieBudgetaire:
+    return EconomieBudgetaire(
+        fraude=int(values.get("fraude", 0)),
+        rescoring=int(values.get("rescoring", 0)),
+        total=int(values.get("total", 0)),
+    )
 
 
 def compute_top_provinces(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]:
