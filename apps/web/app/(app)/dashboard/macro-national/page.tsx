@@ -3,6 +3,9 @@ import type { MacroNationalPayload } from "@/lib/types/macro-national";
 import { KpiCard } from "@/components/kpi-card";
 import { NoData } from "@/components/no-data";
 import { Section } from "@/components/section";
+import { EvolutionLineChart } from "@/components/line-chart";
+import { DataTable } from "@/components/data-table";
+import { UploadDrawer } from "@/components/upload-drawer";
 import { Card } from "@/components/ui/card";
 import { formatBigNumber } from "@/lib/format";
 
@@ -20,6 +23,10 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
   const rs = data.rescoring;
   const eb = data.economie_budgetaire;
 
+  const monthly = data.monthly_evolution ?? null;
+  const topInscriptions = data.top_provinces_inscriptions ?? null;
+  const topBloques = data.top_provinces_bloques ?? null;
+
   return (
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -33,14 +40,7 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
               : "Aucune donnée chargée"}
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-white hover:bg-brand-dark"
-          disabled
-          title="Chargement de données disponible à l'étape 5"
-        >
-          Charger des données
-        </button>
+        <UploadDrawer />
       </header>
 
       <Section title="Chiffres clés des inscriptions">
@@ -90,9 +90,11 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
           <h3 className="text-sm font-semibold text-brand-dark">
             Dynamique des inscriptions au RSU
           </h3>
-          {data.monthly_evolution?.length ? (
-            <div className="mt-4 text-xs text-brand-muted">
-              {data.monthly_evolution.length} points mensuels.
+          {monthly && monthly.length > 0 ? (
+            <div className="mt-4">
+              <EvolutionLineChart
+                data={monthly.map((p) => ({ month: p.month, value: p.value }))}
+              />
             </div>
           ) : (
             <NoData className="mt-4" />
@@ -117,7 +119,21 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
           <h3 className="text-sm font-semibold text-brand-dark">
             Évolution mensuelle des inscriptions
           </h3>
-          <NoData className="mt-4" />
+          {monthly && monthly.length > 0 ? (
+            <div className="mt-4">
+              <DataTable
+                headers={["Mois", "Valeur", "Delta", "%"]}
+                rows={monthly.map((p) => ({
+                  label: p.month,
+                  value: p.value,
+                  delta: p.delta,
+                  pctChange: p.pct_change,
+                }))}
+              />
+            </div>
+          ) : (
+            <NoData className="mt-4" />
+          )}
         </Card>
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-brand-dark">
@@ -249,9 +265,15 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
           <h3 className="text-sm font-semibold text-brand-dark">
             Top 5 provinces: inscriptions nettes
           </h3>
-          {data.top_provinces_inscriptions?.length ? (
-            <div className="mt-4 text-xs text-brand-muted">
-              {data.top_provinces_inscriptions.length} provinces.
+          {topInscriptions && topInscriptions.length > 0 ? (
+            <div className="mt-4">
+              <DataTable
+                headers={["Province", "Total"]}
+                rows={topInscriptions.map((p) => ({
+                  label: p.province,
+                  value: p.value,
+                }))}
+              />
             </div>
           ) : (
             <NoData className="mt-4" />
@@ -261,9 +283,15 @@ export default async function MacroNationalPage(): Promise<React.ReactElement> {
           <h3 className="text-sm font-semibold text-brand-dark">
             Top 5 provinces: ménages bloqués
           </h3>
-          {data.top_provinces_bloques?.length ? (
-            <div className="mt-4 text-xs text-brand-muted">
-              {data.top_provinces_bloques.length} provinces.
+          {topBloques && topBloques.length > 0 ? (
+            <div className="mt-4">
+              <DataTable
+                headers={["Province", "Total"]}
+                rows={topBloques.map((p) => ({
+                  label: p.province,
+                  value: p.value,
+                }))}
+              />
             </div>
           ) : (
             <NoData className="mt-4" />
