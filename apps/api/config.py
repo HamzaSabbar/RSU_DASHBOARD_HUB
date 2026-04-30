@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     upload_dir: Path = Path("/data/uploads")
     jwt_algorithm: str = "HS256"
     jwt_ttl_seconds: int = 60 * 60 * 8  # 8h
+    gcs_bucket_name: str | None = None
+    gcs_prefix: str = "rsu-dashboard"
+    storage_driver: str = "local"
+    storage_local_path: Path = Path("./storage")
+    report_max_upload_size_mb: int = 50
+    report_job_repository: str = "db"
+    report_worker_poll_seconds: float = 2.0
 
 
 settings = Settings()

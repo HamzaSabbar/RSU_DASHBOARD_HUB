@@ -30,7 +30,7 @@ async def persist_upload(
     original_filename: str,
     content: bytes,
 ) -> tuple[Upload, str | None]:
-    """Write a file to disk and record a uploads row. Returns (row, error_message)."""
+    """Write a file to disk and record an uploads row. Returns (row, error_message)."""
     board_id = await _get_board_id(session)
 
     target_dir: Path = settings.upload_dir / BOARD_SLUG
@@ -41,10 +41,7 @@ async def persist_upload(
     error: str | None = None
 
     parsers = {
-        FileKind.INSCRIPTIONS_RNP: parser.parse_inscriptions_rnp,
-        FileKind.TRAITEMENT_FMS: parser.parse_traitement_fms,
-        FileKind.FLUX_REGIONS: parser.parse_flux_regions,
-        FileKind.MENAGES_BLOQUES_REGIONS: parser.parse_menages_bloques_regions,
+        FileKind.CONSOLIDATED: parser.parse_consolidated,
         FileKind.ECONOMIE_BUDGETAIRE: parser.parse_economie_budgetaire,
     }
     if file_kind is None:
@@ -97,7 +94,6 @@ async def recompute_snapshot(session: AsyncSession, *, user: User) -> MacroNatio
     """Read the latest accepted upload per file_kind, run analytics, upsert snapshot."""
     board_id = await _get_board_id(session)
 
-    # latest accepted upload per file_kind
     sub = (
         select(Upload.file_kind, Upload.stored_path, Upload.uploaded_at)
         .where(Upload.board_id == board_id, Upload.status == "accepted")
@@ -110,33 +106,20 @@ async def recompute_snapshot(session: AsyncSession, *, user: User) -> MacroNatio
 
     payload = MacroNationalPayload()
 
-    inscriptions_path = latest_by_kind.get(FileKind.INSCRIPTIONS_RNP.value)
-    if inscriptions_path:
-        content = Path(inscriptions_path).read_bytes()
-        df = parser.parse_inscriptions_rnp(content)
-        payload.inscriptions_kpis = analytics.compute_inscriptions_kpis(df)
-        payload.monthly_evolution = analytics.compute_monthly_evolution(df)
-        payload.top_provinces_inscriptions = analytics.compute_top_provinces(df, k=5)
-
-    fms_path = latest_by_kind.get(FileKind.TRAITEMENT_FMS.value)
-    if fms_path:
-        content = Path(fms_path).read_bytes()
-        df = parser.parse_traitement_fms(content)
-        payload.fms_kpis = analytics.compute_fms_kpis(df)
-        payload.fms_buckets = analytics.compute_fms_buckets(df)
-
-    flux_path = latest_by_kind.get(FileKind.FLUX_REGIONS.value)
-    if flux_path:
-        content = Path(flux_path).read_bytes()
-        df = parser.parse_flux_regions(content)
+    consolidated_path = latest_by_kind.get(FileKind.CONSOLIDATED.value)
+    if consolidated_path:
+        content = Path(consolidated_path).read_bytes()
+        df = parser.parse_consolidated(content)
+        insc_df = df.rename(columns={"inscriptions_rsu_individus": "value"})[
+            ["province", "month", "value"]
+        ]
+        payload.inscriptions_kpis = analytics.compute_inscriptions_kpis(insc_df)
+        payload.monthly_evolution = analytics.compute_monthly_evolution(insc_df)
+        payload.top_provinces_inscriptions = analytics.compute_top_provinces(insc_df, k=5)
+        payload.entries_exits = analytics.compute_entries_exits(df)
         payload.region_flux = analytics.compute_region_flux(df)
-
-    bloques_path = latest_by_kind.get(FileKind.MENAGES_BLOQUES_REGIONS.value)
-    if bloques_path:
-        content = Path(bloques_path).read_bytes()
-        df = parser.parse_menages_bloques_regions(content)
-        payload.region_bloques = analytics.compute_region_bloques(df)
         payload.menages_bloques_categories = analytics.compute_menages_bloques_categories(df)
+        payload.region_bloques = analytics.compute_region_bloques(df)
         payload.top_provinces_bloques = analytics.compute_top_bloques_regions(df, k=5)
 
     economie_path = latest_by_kind.get(FileKind.ECONOMIE_BUDGETAIRE.value)

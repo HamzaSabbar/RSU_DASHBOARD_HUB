@@ -1,346 +1,116 @@
-import { apiFetch } from "@/lib/api";
-import type { MacroNationalPayload } from "@/lib/types/macro-national";
-import { KpiCard } from "@/components/kpi-card";
-import { NoData } from "@/components/no-data";
-import { Section } from "@/components/section";
-import { EvolutionLineChart } from "@/components/line-chart";
-import { DataTable } from "@/components/data-table";
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
+import { ApiError, apiFetch } from "@/lib/api";
+import {
+  ReportDashboardView,
+  type ReportDashboard,
+} from "@/components/report-dashboard-view";
+import {
+  ReportDateFilter,
+  type ReportAvailablePeriods,
+} from "@/components/report-date-filter";
 import { UploadDrawer } from "@/components/upload-drawer";
-import { FMSStackedBar } from "@/components/stacked-bar";
-import { VerticalBarChart } from "@/components/vertical-bar";
-import { HorizontalBarChart } from "@/components/horizontal-bar";
-import { Card } from "@/components/ui/card";
-import { formatBigNumber } from "@/lib/format";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
-export default async function MacroNationalPage(): Promise<React.ReactElement> {
-  const data = await apiFetch<MacroNationalPayload>(
-    "/api/boards/macro-national/data",
+export default async function MacroNationalPage({
+  searchParams,
+}: {
+  searchParams?: { startDate?: string; endDate?: string };
+}): Promise<React.ReactElement> {
+  const periods = await getAvailablePeriods();
+  const dashboard = await getDashboard(
+    searchParams?.startDate,
+    searchParams?.endDate,
   );
-
-  const k = data.inscriptions_kpis;
-  const ps = data.programmes_sociaux;
-  const fms = data.fms_kpis;
-  const rf = data.radiation_fraude;
-  const rs = data.rescoring;
-  const eb = data.economie_budgetaire;
-
-  const monthly = data.monthly_evolution ?? null;
-  const topInscriptions = data.top_provinces_inscriptions ?? null;
-  const topBloques = data.top_provinces_bloques ?? null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-brand-dark">
-            Tableau de bord hebdomadaire de suivi RSU
+          <h1 className="text-2xl font-semibold text-brand-dark">
+            Macro National
           </h1>
           <p className="mt-1 text-sm text-brand-muted">
-            {data.reporting_date
-              ? `Semaine du ${new Date(data.reporting_date).toLocaleDateString("fr-FR")}`
-              : "Aucune donnée chargée"}
+            Données cumulées depuis les classeurs Excel RSU validés. Le filtre
+            applique un intervalle de dates aux faits actifs.
           </p>
         </div>
-        <UploadDrawer />
+        <div className="flex flex-wrap items-start justify-end gap-3">
+          <Link
+            href="/dashboard/macro-national/kpi-methodology"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-brand-border bg-white px-3 text-sm font-medium text-slate-900 hover:bg-slate-50"
+          >
+            <BookOpen className="h-4 w-4" aria-hidden />
+            Méthodologie KPI
+          </Link>
+          <ReportDateFilter
+            periods={periods}
+            selectedStartDate={searchParams?.startDate}
+            selectedEndDate={searchParams?.endDate}
+          />
+          <UploadDrawer />
+        </div>
       </header>
 
-      <Section title="Chiffres clés des inscriptions">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <KpiCard
-            label="Ménages inscrits"
-            value={k?.total_menages ?? null}
-            sublabel={
-              k ? `${formatBigNumber(k.total_personnes)} personnes` : undefined
-            }
-          />
-          <KpiCard
-            label="Personnes inscrites"
-            value={k?.total_personnes ?? null}
-          />
-          <KpiCard
-            label="Nouveaux ménages (mois)"
-            value={k?.new_menages_last_month ?? null}
-          />
-          <KpiCard
-            label="Variation mensuelle"
-            value={
-              k?.new_menages_last_month_pct_change != null
-                ? Math.round(k.new_menages_last_month_pct_change)
-                : null
-            }
-            sublabel="%"
-          />
-        </div>
-      </Section>
-
-      <Section title="Programmes sociaux">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <KpiCard
-            label="Bénéficiaires Tadamon"
-            value={ps?.tadamon_beneficiaries ?? null}
-          />
-          <KpiCard
-            label="Bénéficiaires AMO"
-            value={ps?.amo_beneficiaries ?? null}
-          />
-        </div>
-      </Section>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Dynamique des inscriptions au RSU
-          </h3>
-          {monthly && monthly.length > 0 ? (
-            <div className="mt-4">
-              <EvolutionLineChart
-                data={monthly.map((p) => ({ month: p.month, value: p.value }))}
-              />
-            </div>
-          ) : (
-            <NoData className="mt-4" />
-          )}
+      {dashboard ? (
+        <ReportDashboardView dashboard={dashboard} />
+      ) : periods ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Aucune donnée disponible pour le moment</CardTitle>
+            <CardDescription>
+              Aucun dashboard n’est disponible pour la période sélectionnée.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-brand-muted">
+            Modifiez la date ou revenez à la dernière période disponible.
+          </CardContent>
         </Card>
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Dynamique d&apos;entrées / sorties (ASD)
-          </h3>
-          {data.entries_exits?.length ? (
-            <div className="mt-4 text-xs text-brand-muted">
-              {data.entries_exits.length} points mensuels.
-            </div>
-          ) : (
-            <NoData className="mt-4" />
-          )}
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Aucun rapport traité</CardTitle>
+            <CardDescription>
+              Chargez un classeur hebdomadaire RSU pour créer le premier job.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-brand-muted">
+            Le dashboard apparaîtra ici dès que le worker aura terminé la
+            validation et le calcul des indicateurs.
+          </CardContent>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Évolution mensuelle des inscriptions
-          </h3>
-          {monthly && monthly.length > 0 ? (
-            <div className="mt-4">
-              <DataTable
-                headers={["Mois", "Valeur", "Delta", "%"]}
-                rows={monthly.map((p) => ({
-                  label: p.month,
-                  value: p.value,
-                  delta: p.delta,
-                  pctChange: p.pct_change,
-                }))}
-              />
-            </div>
-          ) : (
-            <NoData className="mt-4" />
-          )}
-        </Card>
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Évolution mensuelle ASD
-          </h3>
-          <NoData className="mt-4" />
-        </Card>
-      </div>
-
-      <Section title="Traitement FMS">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <KpiCard label="Demandes traitées" value={fms?.demandes_traitees ?? null} />
-          <KpiCard
-            label="Doute confirmé"
-            value={fms?.doute_confirme ?? null}
-            tone="danger"
-          />
-          <KpiCard
-            label="Doute levé"
-            value={fms?.doute_leve ?? null}
-            tone="positive"
-          />
-        </div>
-      </Section>
-
-      <Section title="Radiation pour fraude">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <KpiCard
-            label="Ménages radiés"
-            value={rf?.menages_radies ?? null}
-            tone="danger"
-          />
-          <KpiCard
-            label="Personnes radiées"
-            value={rf?.personnes_radiees ?? null}
-            tone="danger"
-          />
-        </div>
-      </Section>
-
-      <Section title="Rescoring">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <KpiCard
-            label="Ménages rescorés"
-            value={rs?.menages_rescores ?? null}
-          />
-          <KpiCard
-            label="Personnes rescorées"
-            value={rs?.personnes_rescorees ?? null}
-          />
-        </div>
-      </Section>
-
-      <Section title="Économie budgétaire totale">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <KpiCard
-            label="Fraude"
-            value={eb?.fraude ?? null}
-            tone="positive"
-            sublabel="MAD"
-          />
-          <KpiCard
-            label="Rescoring"
-            value={eb?.rescoring ?? null}
-            tone="positive"
-            sublabel="MAD"
-          />
-          <KpiCard
-            label="Total optimisation"
-            value={eb?.total ?? null}
-            tone="positive"
-            sublabel="MAD"
-          />
-        </div>
-      </Section>
-
-      <Card className="p-5">
-        <h3 className="text-sm font-semibold text-brand-dark">
-          Résultats des traitements FMS par niveau de risque
-        </h3>
-        {data.fms_buckets && data.fms_buckets.length > 0 ? (
-          <div className="mt-4">
-            <FMSStackedBar buckets={data.fms_buckets} />
-          </div>
-        ) : (
-          <NoData className="mt-4" />
-        )}
-      </Card>
-
-      <Card className="p-5">
-        <h3 className="text-sm font-semibold text-brand-dark">Ménages bloqués</h3>
-        {data.menages_bloques_categories &&
-        data.menages_bloques_categories.length > 0 ? (
-          <div className="mt-4">
-            <VerticalBarChart
-              data={data.menages_bloques_categories.map((c) => ({
-                category: c.category,
-                count: c.count,
-              }))}
-              labelKey="category"
-              valueKey="count"
-              color="#DC2626"
-            />
-          </div>
-        ) : (
-          <NoData className="mt-4" />
-        )}
-      </Card>
-
-      <Card className="p-5">
-        <h3 className="text-sm font-semibold text-brand-dark">
-          Entrants / Sortants ASD + AMO Tadamon par région
-        </h3>
-        {data.region_flux && data.region_flux.length > 0 ? (
-          <div className="mt-4">
-            <HorizontalBarChart
-              data={data.region_flux.map((r) => ({
-                region: r.region,
-                entrants: r.entrants,
-                sortants: r.sortants,
-              }))}
-              labelKey="region"
-              series={[
-                { dataKey: "entrants", name: "Entrants", color: "#16A34A" },
-                { dataKey: "sortants", name: "Sortants", color: "#DC2626" },
-              ]}
-            />
-          </div>
-        ) : (
-          <NoData className="mt-4" />
-        )}
-      </Card>
-
-      <Card className="p-5">
-        <h3 className="text-sm font-semibold text-brand-dark">
-          Ménages bloqués par région
-        </h3>
-        {data.region_bloques && data.region_bloques.length > 0 ? (
-          <div className="mt-4">
-            <HorizontalBarChart
-              data={data.region_bloques.map((r) => ({
-                region: r.region,
-                bloques: r.bloques,
-              }))}
-              labelKey="region"
-              series={[
-                { dataKey: "bloques", name: "Ménages bloqués", color: "#0F7B3F" },
-              ]}
-            />
-          </div>
-        ) : (
-          <NoData className="mt-4" />
-        )}
-      </Card>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Top 5 provinces: inscriptions nettes
-          </h3>
-          {topInscriptions && topInscriptions.length > 0 ? (
-            <div className="mt-4">
-              <DataTable
-                headers={["Province", "Total"]}
-                rows={topInscriptions.map((p) => ({
-                  label: p.province,
-                  value: p.value,
-                }))}
-              />
-            </div>
-          ) : (
-            <NoData className="mt-4" />
-          )}
-        </Card>
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold text-brand-dark">
-            Top 5 provinces: ménages bloqués
-          </h3>
-          {topBloques && topBloques.length > 0 ? (
-            <div className="mt-4">
-              <DataTable
-                headers={["Province", "Total"]}
-                rows={topBloques.map((p) => ({
-                  label: p.province,
-                  value: p.value,
-                }))}
-              />
-            </div>
-          ) : (
-            <NoData className="mt-4" />
-          )}
-        </Card>
-      </div>
-
-      <footer className="space-y-1 border-t border-brand-border pt-4 text-xs text-brand-muted">
-        <p>
-          Note 1: les bénéficiaires CNRA non déclarés peuvent ne pas figurer
-          dans les totaux de ce rapport.
-        </p>
-        <p>
-          Note 2: les bénéficiaires CNSS non déclarés peuvent ne pas figurer
-          dans les totaux de ce rapport.
-        </p>
-      </footer>
+      )}
     </div>
   );
+}
+
+async function getDashboard(
+  startDate?: string,
+  endDate?: string,
+): Promise<ReportDashboard | null> {
+  try {
+    return await apiFetch<ReportDashboard>("/api/reports/dashboard", {
+      searchParams: { startDate, endDate },
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+async function getAvailablePeriods(): Promise<ReportAvailablePeriods | null> {
+  try {
+    return await apiFetch<ReportAvailablePeriods>("/api/reports/available-periods");
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }

@@ -5,36 +5,46 @@ import io
 import pytest
 from openpyxl import Workbook
 
+_CONSOLIDATED_HEADERS = [
+    "month",
+    "region",
+    "province",
+    "inscriptions_rsu_individus",
+    "entrants_menage_asd",
+    "sortants_menage_asd",
+    "entrants_menage_amot",
+    "sortants_menage_amot",
+    "bloque_fms",
+    "bloque_multi",
+    "bloque_individuel",
+]
 
-@pytest.fixture
-def inscriptions_xlsx_bytes() -> bytes:
-    """3 provinces × 4 months, matching the stat_nouveaux_inscrits_rnp layout."""
+# month, region, province, insc, entr_asd, sort_asd, entr_amot, sort_amot, blq_fms, blq_multi, blq_indiv
+_CONSOLIDATED_ROWS = [
+    ("2026-01", "Béni Mellal-Khénifra", "AZILAL",       100, 50, 30, 10, 5,  20, 15, 30),
+    ("2026-01", "Béni Mellal-Khénifra", "BEN MHAMED",   200, 80, 40, 20, 8,  40, 25, 50),
+    ("2026-01", "Casablanca-Settat",    "CASABLANCA",    500, 200, 100, 50, 20, 80, 60, 100),
+    ("2026-02", "Béni Mellal-Khénifra", "AZILAL",       120, 55, 35, 12, 6,  25, 18, 35),
+    ("2026-02", "Béni Mellal-Khénifra", "BEN MHAMED",   220, 85, 45, 22, 9,  45, 28, 55),
+    ("2026-02", "Casablanca-Settat",    "CASABLANCA",    550, 210, 110, 55, 22, 85, 65, 110),
+]
+
+
+def _make_xlsx(headers: list[str], rows: list[tuple]) -> bytes:
     wb = Workbook()
     ws = wb.active
     assert ws is not None
-    # row 1: year headers (empty in col A)
-    ws.cell(row=1, column=1, value=None)
-    ws.cell(row=1, column=2, value=2025)
-    ws.cell(row=1, column=3, value=None)
-    ws.cell(row=1, column=4, value=None)
-    ws.cell(row=1, column=5, value=None)
-    # row 2: month abbreviations
-    ws.cell(row=2, column=1, value="Province")
-    ws.cell(row=2, column=2, value="janv.")
-    ws.cell(row=2, column=3, value="févr.")
-    ws.cell(row=2, column=4, value="mars")
-    ws.cell(row=2, column=5, value="avril")
-    # data
-    data = [
-        ("Casablanca", 1200, 1500, 1800, 2000),
-        ("Rabat", 800, 900, 1100, 1300),
-        ("Tanger", 300, 350, 400, 500),
-    ]
-    for i, (prov, *vals) in enumerate(data, start=3):
-        ws.cell(row=i, column=1, value=prov)
-        for j, v in enumerate(vals, start=2):
-            ws.cell(row=i, column=j, value=v)
-
+    for j, h in enumerate(headers, start=1):
+        ws.cell(1, j, h)
+    for i, row in enumerate(rows, start=2):
+        for j, v in enumerate(row, start=1):
+            ws.cell(i, j, v)
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+@pytest.fixture
+def consolidated_xlsx_bytes() -> bytes:
+    """3 provinces × 2 regions × 2 months, consolidated format."""
+    return _make_xlsx(_CONSOLIDATED_HEADERS, _CONSOLIDATED_ROWS)

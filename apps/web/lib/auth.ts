@@ -1,12 +1,46 @@
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { getAuthSecret } from "@/lib/auth-secret";
 
 const API_URL_INTERNAL =
   process.env.API_URL_INTERNAL ?? "http://api:8000";
+const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 8;
+const ACCESS_TOKEN_CLOCK_SKEW_SECONDS = 30;
+
+function getAccessTokenExpiresAt(accessToken: string): number | null {
+  const [, payload] = accessToken.split(".");
+  if (!payload) return null;
+
+  try {
+    const claims = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as { exp?: unknown };
+    return typeof claims.exp === "number" ? claims.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasUsableAccessToken(accessToken: unknown): accessToken is string {
+  if (typeof accessToken !== "string") return false;
+
+  const expiresAt = getAccessTokenExpiresAt(accessToken);
+  if (!expiresAt) return false;
+
+  const now = Math.floor(Date.now() / 1000);
+  return expiresAt > now + ACCESS_TOKEN_CLOCK_SKEW_SECONDS;
+}
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  secret: getAuthSecret(),
+  session: {
+    strategy: "jwt",
+    maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
+  },
+  jwt: {
+    maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
+  },
   pages: { signIn: "/login" },
   providers: [
     Credentials({
@@ -58,7 +92,11 @@ export const authOptions: NextAuthOptions = {
       const s = session as unknown as Record<string, unknown> & {
         user?: Record<string, unknown>;
       };
-      s.accessToken = t.accessToken;
+      if (hasUsableAccessToken(t.accessToken)) {
+        s.accessToken = t.accessToken;
+      } else {
+        delete s.accessToken;
+      }
       if (s.user) {
         s.user.id = t.userId;
         s.user.role = t.role;
@@ -68,6 +106,9 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export function auth() {
-  return getServerSession(authOptions);
+export async function auth() {
+  const session = await getServerSession(authOptions);
+  const s = session as Record<string, unknown> | null;
+  if (!hasUsableAccessToken(s?.accessToken)) return null;
+  return session;
 }

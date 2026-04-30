@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 import jwt
 
@@ -21,4 +21,7 @@ def encode_access_token(user_id: str, email: str, role: str) -> str:
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, settings.nextauth_secret, algorithms=[settings.jwt_algorithm])
+    return cast(
+        dict[str, Any],
+        jwt.decode(token, settings.nextauth_secret, algorithms=[settings.jwt_algorithm]),
+    )

@@ -1,0 +1,20 @@
+{
+  "metadata": {},
+  "regions": [],
+  "provinces": [],
+  "codes": [],
+  "rsu_stock": [],
+  "rsu_new_registrations": [],
+  "rsu_annotations": [],
+  "asd_stock": [],
+  "asd_flow": [],
+  "asd_rescoring": [],
+  "asd_fraud": [],
+  "amo_stock": [],
+  "amo_flow": [],
+  "amo_rescoring": [],
+  "amo_fraud": [],
+  "fms_treatment": [],
+  "fms_blocked": [],
+  "amount_rules": []
+}

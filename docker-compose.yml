@@ -31,8 +31,14 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       UPLOAD_DIR: /data/uploads
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /data/storage
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      GCS_PREFIX: ${GCS_PREFIX:-rsu-dashboard}
+      REPORT_WORKER_POLL_SECONDS: ${REPORT_WORKER_POLL_SECONDS:-2}
     volumes:
       - ./data/uploads:/data/uploads
+      - ./data/storage:/data/storage
     ports:
       - "8000:8000"
     healthcheck:
@@ -40,6 +46,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    entrypoint: ["python", "-m", "reports.worker"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      UPLOAD_DIR: /data/uploads
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /data/storage
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      GCS_PREFIX: ${GCS_PREFIX:-rsu-dashboard}
+      REPORT_WORKER_POLL_SECONDS: ${REPORT_WORKER_POLL_SECONDS:-2}
+    volumes:
+      - ./data/uploads:/data/uploads
+      - ./data/storage:/data/storage
 
   web:
     build:

@@ -1,0 +1,38 @@
+{
+  "jobId": "4e6dcfcd-efcb-41d1-b1ce-0aad96eff8ed",
+  "idChargement": "EXAMPLE_2026W11",
+  "summary": {
+    "errors": 0,
+    "warnings": 3,
+    "infos": 0
+  },
+  "messages": [
+    {
+      "severity": "warning",
+      "sheet": "02_Regions",
+      "section": "Régions",
+      "row": 8,
+      "column": "actif",
+      "code": "COLONNE_INCONNUE",
+      "message": "Colonne inconnue dans la section Régions: actif"
+    },
+    {
+      "severity": "warning",
+      "sheet": "03_Provinces",
+      "section": "Provinces",
+      "row": 8,
+      "column": "cle_province",
+      "code": "COLONNE_INCONNUE",
+      "message": "Colonne inconnue dans la section Provinces: cle_province"
+    },
+    {
+      "severity": "warning",
+      "sheet": "03_Provinces",
+      "section": "Provinces",
+      "row": 8,
+      "column": "nom_region",
+      "code": "COLONNE_INCONNUE",
+      "message": "Colonne inconnue dans la section Provinces: nom_region"
+    }
+  ]
+}

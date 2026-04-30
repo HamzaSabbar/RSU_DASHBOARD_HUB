@@ -6,10 +6,7 @@ from pydantic import BaseModel
 
 
 class FileKind(str, Enum):
-    INSCRIPTIONS_RNP = "inscriptions_rnp"
-    TRAITEMENT_FMS = "traitement_fms"
-    FLUX_REGIONS = "flux_regions"
-    MENAGES_BLOQUES_REGIONS = "menages_bloques_regions"
+    CONSOLIDATED = "consolidated"
     ECONOMIE_BUDGETAIRE = "economie_budgetaire"
 
 
@@ -22,34 +19,28 @@ class ExpectedFile(BaseModel):
 
 EXPECTED_FILES: list[ExpectedFile] = [
     ExpectedFile(
-        kind=FileKind.INSCRIPTIONS_RNP,
-        label="Inscriptions RNP",
+        kind=FileKind.CONSOLIDATED,
+        label="Données consolidées",
         description=(
-            "Stat des nouveaux inscrits RNP. Province en colonne A, "
-            "colonnes mensuelles YYYY-MM, colonne Total en fin."
+            "Fichier principal : une ligne par mois × province. "
+            "Colonnes requises : month (YYYY-MM), region, province, "
+            "inscriptions_rsu_individus, entrants_menage_asd, sortants_menage_asd, "
+            "entrants_menage_amot, sortants_menage_amot, bloque_fms, bloque_multi, "
+            "bloque_individuel."
         ),
-        required_columns=["Province"],
-    ),
-    ExpectedFile(
-        kind=FileKind.TRAITEMENT_FMS,
-        label="Traitement FMS",
-        description=(
-            "Résultats FMS: type de famille x niveau de risque x "
-            "doute confirmé / doute levé."
-        ),
-        required_columns=["type_famille", "niveau_risque", "doute_confirme", "doute_leve"],
-    ),
-    ExpectedFile(
-        kind=FileKind.FLUX_REGIONS,
-        label="Flux ASD par région",
-        description="Entrants / sortants ASD + AMO Tadamon par région.",
-        required_columns=["region", "entrants", "sortants"],
-    ),
-    ExpectedFile(
-        kind=FileKind.MENAGES_BLOQUES_REGIONS,
-        label="Ménages bloqués par région",
-        description="Ménages bloqués par région.",
-        required_columns=["region", "bloques"],
+        required_columns=[
+            "month",
+            "region",
+            "province",
+            "inscriptions_rsu_individus",
+            "entrants_menage_asd",
+            "sortants_menage_asd",
+            "entrants_menage_amot",
+            "sortants_menage_amot",
+            "bloque_fms",
+            "bloque_multi",
+            "bloque_individuel",
+        ],
     ),
     ExpectedFile(
         kind=FileKind.ECONOMIE_BUDGETAIRE,
@@ -92,8 +83,8 @@ class FMSKPIs(BaseModel):
 
 
 class FMSBucket(BaseModel):
-    type_famille: str  # "Individuels" | "Mariés avec enfants" | "Mono-parental" | "Multi-noyaux"
-    niveau_risque: str  # "Élevé" | "Moyen"
+    type_famille: str
+    niveau_risque: str
     doute_confirme: int
     doute_leve: int
 
@@ -115,7 +106,7 @@ class EconomieBudgetaire(BaseModel):
 
 
 class MenagesBloquesCategory(BaseModel):
-    category: str  # "FMS fraude" | "Multi-noyau procédure" | "Individuel procédure"
+    category: str
     count: int
 
 

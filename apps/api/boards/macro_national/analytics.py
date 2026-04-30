@@ -4,8 +4,7 @@ import pandas as pd
 
 from boards.macro_national.schemas import (
     EconomieBudgetaire,
-    FMSBucket,
-    FMSKPIs,
+    EntriesExitsPoint,
     InscriptionsKPIs,
     MenagesBloquesCategory,
     MonthlyPoint,
@@ -16,7 +15,7 @@ from boards.macro_national.schemas import (
 
 
 def compute_inscriptions_kpis(df: pd.DataFrame, personnes_per_menage: float = 3.3) -> InscriptionsKPIs:
-    """df columns: province, month, value (count of new ménages in that month)."""
+    """df columns: province, month, value (aggregated inscriptions per province-month)."""
     if df.empty:
         return InscriptionsKPIs(
             total_menages=0,
@@ -48,6 +47,7 @@ def compute_inscriptions_kpis(df: pd.DataFrame, personnes_per_menage: float = 3.
 
 
 def compute_monthly_evolution(df: pd.DataFrame) -> list[MonthlyPoint]:
+    """df columns: province, month, value."""
     if df.empty:
         return []
     monthly = (
@@ -71,83 +71,8 @@ def compute_monthly_evolution(df: pd.DataFrame) -> list[MonthlyPoint]:
     return points
 
 
-def compute_fms_kpis(df: pd.DataFrame) -> FMSKPIs:
-    if df.empty:
-        return FMSKPIs(demandes_traitees=0, doute_confirme=0, doute_leve=0)
-    confirme = int(df["doute_confirme"].sum())
-    leve = int(df["doute_leve"].sum())
-    return FMSKPIs(
-        demandes_traitees=confirme + leve,
-        doute_confirme=confirme,
-        doute_leve=leve,
-    )
-
-
-def compute_fms_buckets(df: pd.DataFrame) -> list[FMSBucket]:
-    return [
-        FMSBucket(
-            type_famille=str(row["type_famille"]),
-            niveau_risque=str(row["niveau_risque"]),
-            doute_confirme=int(row["doute_confirme"]),
-            doute_leve=int(row["doute_leve"]),
-        )
-        for _, row in df.iterrows()
-    ]
-
-
-def compute_region_flux(df: pd.DataFrame) -> list[RegionFlux]:
-    return [
-        RegionFlux(
-            region=str(row["region"]),
-            entrants=int(row["entrants"]),
-            sortants=int(row["sortants"]),
-        )
-        for _, row in df.iterrows()
-    ]
-
-
-def compute_menages_bloques_categories(df: pd.DataFrame) -> list[MenagesBloquesCategory]:
-    if df.empty:
-        return []
-    return [
-        MenagesBloquesCategory(category="FMS fraude", count=int(df["fms_fraude"].sum())),
-        MenagesBloquesCategory(
-            category="Multi-noyau procédure",
-            count=int(df["multi_noyau_procedure"].sum()),
-        ),
-        MenagesBloquesCategory(
-            category="Individuel procédure",
-            count=int(df["individuel_procedure"].sum()),
-        ),
-    ]
-
-
-def compute_region_bloques(df: pd.DataFrame) -> list[RegionBloques]:
-    return [
-        RegionBloques(region=str(row["region"]), bloques=int(row["bloques"]))
-        for _, row in df.iterrows()
-    ]
-
-
-def compute_top_bloques_regions(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]:
-    if df.empty:
-        return []
-    top = df.sort_values("bloques", ascending=False).head(k)
-    return [
-        ProvinceRanking(province=str(row["region"]), value=int(row["bloques"]))
-        for _, row in top.iterrows()
-    ]
-
-
-def compute_economie_budgetaire(values: dict[str, int]) -> EconomieBudgetaire:
-    return EconomieBudgetaire(
-        fraude=int(values.get("fraude", 0)),
-        rescoring=int(values.get("rescoring", 0)),
-        total=int(values.get("total", 0)),
-    )
-
-
 def compute_top_provinces(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]:
+    """df columns: province, month, value."""
     if df.empty:
         return []
     totals = (
@@ -160,3 +85,101 @@ def compute_top_provinces(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]
         ProvinceRanking(province=str(row["province"]), value=int(row["value"]))
         for _, row in totals.iterrows()
     ]
+
+
+def compute_entries_exits(df: pd.DataFrame) -> list[EntriesExitsPoint]:
+    """df is the consolidated dataframe. Sums asd + amot entrants/sortants per month."""
+    tmp = df.copy()
+    tmp["entrants"] = tmp["entrants_menage_asd"] + tmp["entrants_menage_amot"]
+    tmp["sortants"] = tmp["sortants_menage_asd"] + tmp["sortants_menage_amot"]
+    by_month = (
+        tmp.groupby("month", as_index=False)[["entrants", "sortants"]]
+        .sum()
+        .sort_values("month")
+    )
+    return [
+        EntriesExitsPoint(
+            month=str(row["month"]),
+            entrants=int(row["entrants"]),
+            sortants=int(row["sortants"]),
+        )
+        for _, row in by_month.iterrows()
+    ]
+
+
+def compute_region_flux(df: pd.DataFrame) -> list[RegionFlux]:
+    """df is the consolidated dataframe. Aggregates entrants/sortants by region."""
+    tmp = df.copy()
+    tmp["entrants"] = tmp["entrants_menage_asd"] + tmp["entrants_menage_amot"]
+    tmp["sortants"] = tmp["sortants_menage_asd"] + tmp["sortants_menage_amot"]
+    by_region = (
+        tmp.groupby("region", as_index=False)[["entrants", "sortants"]]
+        .sum()
+        .sort_values("region")
+    )
+    return [
+        RegionFlux(
+            region=str(row["region"]),
+            entrants=int(row["entrants"]),
+            sortants=int(row["sortants"]),
+        )
+        for _, row in by_region.iterrows()
+    ]
+
+
+def compute_menages_bloques_categories(df: pd.DataFrame) -> list[MenagesBloquesCategory]:
+    """df is the consolidated dataframe."""
+    if df.empty:
+        return []
+    return [
+        MenagesBloquesCategory(category="FMS fraude", count=int(df["bloque_fms"].sum())),
+        MenagesBloquesCategory(
+            category="Multi-noyau procédure",
+            count=int(df["bloque_multi"].sum()),
+        ),
+        MenagesBloquesCategory(
+            category="Individuel procédure",
+            count=int(df["bloque_individuel"].sum()),
+        ),
+    ]
+
+
+def compute_region_bloques(df: pd.DataFrame) -> list[RegionBloques]:
+    """df is the consolidated dataframe. Sums all blocked categories per region."""
+    tmp = df.copy()
+    tmp["total_bloques"] = tmp["bloque_fms"] + tmp["bloque_multi"] + tmp["bloque_individuel"]
+    by_region = (
+        tmp.groupby("region", as_index=False)["total_bloques"]
+        .sum()
+        .sort_values("region")
+    )
+    return [
+        RegionBloques(region=str(row["region"]), bloques=int(row["total_bloques"]))
+        for _, row in by_region.iterrows()
+    ]
+
+
+def compute_top_bloques_regions(df: pd.DataFrame, k: int = 5) -> list[ProvinceRanking]:
+    """Top provinces by total blocked households. df is the consolidated dataframe."""
+    if df.empty:
+        return []
+    tmp = df.copy()
+    tmp["total_bloques"] = tmp["bloque_fms"] + tmp["bloque_multi"] + tmp["bloque_individuel"]
+    by_province = (
+        tmp.groupby("province", as_index=False)["total_bloques"]
+        .sum()
+        .sort_values("total_bloques", ascending=False)
+        .head(k)
+    )
+    return [
+        ProvinceRanking(province=str(row["province"]), value=int(row["total_bloques"]))
+        for _, row in by_province.iterrows()
+    ]
+
+
+def compute_economie_budgetaire(values: dict[str, int]) -> EconomieBudgetaire:
+    return EconomieBudgetaire(
+        fraude=int(values.get("fraude", 0)),
+        rescoring=int(values.get("rescoring", 0)),
+        total=int(values.get("total", 0)),
+    )

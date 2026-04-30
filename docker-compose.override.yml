@@ -9,6 +9,18 @@ services:
     volumes:
       - ./apps/api:/app
       - ./data/uploads:/data/uploads
+      - ./data/storage:/data/storage
+
+  worker:
+    build:
+      target: builder
+    entrypoint: ["python", "-m", "reports.worker"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./apps/api:/app
+      - ./data/uploads:/data/uploads
+      - ./data/storage:/data/storage
 
   web:
     build:

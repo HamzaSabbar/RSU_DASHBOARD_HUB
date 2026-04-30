@@ -1,0 +1,245 @@
+{
+  "jobId": "7d70fbdd-cdeb-445e-b457-2a0022ce4f31",
+  "idChargement": null,
+  "summary": {
+    "errors": 26,
+    "warnings": 0,
+    "infos": 0
+  },
+  "messages": [
+    {
+      "severity": "error",
+      "sheet": "02_Regions",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 02_Regions"
+    },
+    {
+      "severity": "error",
+      "sheet": "03_Provinces",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 03_Provinces"
+    },
+    {
+      "severity": "error",
+      "sheet": "04_Codes",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 04_Codes"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 10_RSU"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 20_ASD"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 30_AMO_Tadamon"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": null,
+      "row": null,
+      "column": null,
+      "code": "FEUILLE_OBLIGATOIRE_MANQUANTE",
+      "message": "Feuille obligatoire manquante: 40_FMS"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "id_chargement",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: id_chargement"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "code_langue",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: code_langue"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "mois_reporting_courant",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: mois_reporting_courant"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "indicateur_mois_partiel",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: indicateur_mois_partiel"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "suffixe_libelle_mois_partiel",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: suffixe_libelle_mois_partiel"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "type_unite_graphique_rsu",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: type_unite_graphique_rsu"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "methode_tendance",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: methode_tendance"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "utiliser_regles_montant_secours",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: utiliser_regles_montant_secours"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 1,
+      "column": "charge_par",
+      "code": "COLONNE_OBLIGATOIRE_MANQUANTE",
+      "message": "Colonne obligatoire manquante dans la section Paramètres: charge_par"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": 2,
+      "column": "mois_reporting_courant",
+      "code": "VALEUR_INVALIDE",
+      "message": "Mois obligatoire manquant: mois_reporting_courant"
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": null,
+      "column": null,
+      "code": "PARAMETRES_LIGNE_ACTIVE_INVALIDE",
+      "message": "La feuille 01_Parametres doit contenir exactement une ligne active avec id_chargement."
+    },
+    {
+      "severity": "error",
+      "sheet": "01_Parametres",
+      "section": "Paramètres",
+      "row": null,
+      "column": "id_chargement",
+      "code": "ID_CHARGEMENT_MANQUANT",
+      "message": "id_chargement est obligatoire."
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Stock RNP/RSU",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: RNP/PERSONNES"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Stock RNP/RSU",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: RSU/MENAGES"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Stock RNP/RSU",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: RSU/PERSONNES"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Stock ASD",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: ASD/MENAGES"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Stock ASD",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: ASD/PERSONNES"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Stock AMO Tadamon",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: AMO_TADAMON/MENAGES"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Stock AMO Tadamon",
+      "row": null,
+      "column": null,
+      "code": "COMBINAISON_STOCK_MANQUANTE",
+      "message": "Combinaison de stock obligatoire manquante: AMO_TADAMON/PERSONNES"
+    }
+  ]
+}

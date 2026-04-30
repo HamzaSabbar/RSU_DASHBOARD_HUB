@@ -17,6 +17,7 @@ from boards.router import router as boards_router
 from config import settings
 from db.models import Board, User
 from db.session import SessionLocal
+from reports.routes import router as reports_router
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -81,6 +82,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(boards_router)
+app.include_router(reports_router)
 
 for spec in discover_boards().values():
     app.include_router(spec.router, prefix=f"/api/boards/{spec.slug}")

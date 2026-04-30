@@ -1,0 +1,527 @@
+{
+  "meta": {
+    "jobId": "040e59b8-e7c2-4c4e-83ed-b34558cb4fcb",
+    "idChargement": "JOB_040e59b8-e7c2-4c4e-83ed-b34558cb4fcb",
+    "titreRapport": "Tableau de bord hebdomadaire de suivi RSU",
+    "dateRapport": "2026-04-16",
+    "dateReferenceDonnees": "2026-04-14",
+    "locale": "fr-MA",
+    "moisReportingCourant": "2026-04",
+    "moisPartiel": false,
+    "terminologie": {
+      "RSU": "Registre Social Unifié",
+      "RNP": "Registre National de la Population",
+      "ASD": "Aide Sociale Directe",
+      "AMO_TADAMON": "AMO Tadamon",
+      "FMS": "Fraud Management System"
+    }
+  },
+  "layout": {
+    "palette": {
+      "positive": "green",
+      "main": "green",
+      "risk": "red",
+      "exit": "red",
+      "neutral": "gray"
+    },
+    "regionOrder": []
+  },
+  "cards": {
+    "inscriptions": {
+      "title": "Chiffres clés des inscriptions",
+      "rnpPersonnesTotal": {
+        "label": "RNP - personnes",
+        "raw": 36138500,
+        "display": "36 138 500",
+        "compactDisplay": "36,1 M",
+        "color": "green"
+      },
+      "rsuMenagesTotal": {
+        "label": "RSU - ménages",
+        "raw": 4863200,
+        "display": "4 863 200",
+        "compactDisplay": "4,9 M",
+        "color": "green"
+      },
+      "rsuPersonnesTotal": {
+        "label": "RSU - personnes",
+        "raw": 19255800,
+        "display": "19 255 800",
+        "compactDisplay": "19,3 M",
+        "color": "green"
+      },
+      "nouvellesInscriptionsMois": {
+        "label": "Nouvelles inscriptions",
+        "raw": 3230,
+        "display": "3 230",
+        "compactDisplay": "3,2 k",
+        "color": "green"
+      },
+      "evolutionMois": {
+        "label": "Évolution vs mois précédent",
+        "raw": 3230,
+        "display": "+3 230",
+        "percentRaw": null,
+        "percentDisplay": null,
+        "color": "green"
+      }
+    },
+    "programmesSociaux": {
+      "title": "Programmes sociaux",
+      "asdMenagesActifs": {
+        "label": "ASD - ménages actifs",
+        "raw": 822500,
+        "display": "822 500",
+        "compactDisplay": "822,5 k",
+        "color": "green"
+      },
+      "asdPersonnesActives": {
+        "label": "ASD - personnes actives",
+        "raw": 3290000,
+        "display": "3 290 000",
+        "compactDisplay": "3,3 M",
+        "color": "green"
+      },
+      "amoMenagesActifs": {
+        "label": "AMO Tadamon - ménages actifs",
+        "raw": 1153500,
+        "display": "1 153 500",
+        "compactDisplay": "1,2 M",
+        "color": "green"
+      },
+      "amoPersonnesActives": {
+        "label": "AMO Tadamon - personnes actives",
+        "raw": 4612000,
+        "display": "4 612 000",
+        "compactDisplay": "4,6 M",
+        "color": "green"
+      }
+    },
+    "traitementFms": {
+      "title": "Traitement FMS",
+      "demandesInjectees": {
+        "label": "Demandes injectées",
+        "raw": 5330,
+        "display": "5 330",
+        "compactDisplay": "5,3 k",
+        "color": "gray"
+      },
+      "demandesTraitees": {
+        "label": "Demandes traitées",
+        "raw": 4284,
+        "display": "4 284",
+        "compactDisplay": "4,3 k",
+        "color": "gray"
+      },
+      "tauxTraitementPct": {
+        "label": "Taux de traitement",
+        "raw": 0.8037523452157599,
+        "display": "80,4 %",
+        "color": "gray"
+      }
+    },
+    "resultatFms": {
+      "title": "Résultat FMS",
+      "douteConfirme": {
+        "label": "Doute confirmé",
+        "raw": 1622,
+        "display": "1 622",
+        "compactDisplay": "1,6 k",
+        "color": "red"
+      },
+      "douteConfirmePct": {
+        "label": "Doute confirmé",
+        "raw": 0.37861811391223155,
+        "display": "37,9 %",
+        "color": "red"
+      },
+      "douteLeve": {
+        "label": "Doute levé",
+        "raw": 2232,
+        "display": "2 232",
+        "compactDisplay": "2,2 k",
+        "color": "gray"
+      },
+      "douteLevePct": {
+        "label": "Doute levé",
+        "raw": 0.5210084033613446,
+        "display": "52,1 %",
+        "color": "gray"
+      }
+    },
+    "radiationFraude": {
+      "title": "Radiation pour fraude",
+      "asdMenagesRadies": {
+        "label": "ASD - ménages radiés",
+        "raw": 31,
+        "display": "31",
+        "compactDisplay": "31",
+        "color": "red"
+      },
+      "amoMenagesRadies": {
+        "label": "AMO Tadamon - ménages radiés",
+        "raw": 25,
+        "display": "25",
+        "compactDisplay": "25",
+        "color": "red"
+      },
+      "totalMenagesRadies": {
+        "label": "Total ménages radiés",
+        "raw": 56,
+        "display": "56",
+        "compactDisplay": "56",
+        "color": "red"
+      },
+      "totalPersonnesRadiees": {
+        "label": "Total personnes radiées",
+        "raw": 236,
+        "display": "236",
+        "compactDisplay": "236",
+        "color": "red"
+      },
+      "savingAnnualRaw": 28800.0,
+      "savingAnnualDisplay": "28,8 k Dhs/an",
+      "color": "red"
+    },
+    "rescoring": {
+      "title": "Rescoring",
+      "asdMenagesSortants": {
+        "label": "ASD - ménages sortants",
+        "raw": 67,
+        "display": "67",
+        "compactDisplay": "67",
+        "color": "red"
+      },
+      "amoMenagesSortants": {
+        "label": "AMO Tadamon - ménages sortants",
+        "raw": 56,
+        "display": "56",
+        "compactDisplay": "56",
+        "color": "red"
+      },
+      "menagesNonCommuniques": {
+        "label": "Ménages non communiqués",
+        "raw": 32,
+        "display": "32",
+        "compactDisplay": "32",
+        "color": "gray"
+      },
+      "savingAnnualRaw": 28800.0,
+      "savingAnnualDisplay": "28,8 k Dhs/an"
+    },
+    "economieBudgetaire": {
+      "title": "Économie budgétaire totale",
+      "fraude": {
+        "label": "Fraude",
+        "raw": 28800.0,
+        "display": "28,8 k Dhs/an",
+        "color": "red"
+      },
+      "rescoring": {
+        "label": "Rescoring",
+        "raw": 28800.0,
+        "display": "28,8 k Dhs/an",
+        "color": "gray"
+      },
+      "total": {
+        "label": "Total optimisation",
+        "raw": 57600.0,
+        "display": "57,6 k Dhs/an",
+        "color": "green"
+      }
+    }
+  },
+  "charts": {
+    "rsuInscriptionsMensuelles": {
+      "title": "Dynamique des inscriptions au RSU",
+      "unit": "MENAGES",
+      "series": [
+        {
+          "month": "2026-04",
+          "label": "avr. 2026",
+          "raw": 3230,
+          "display": "3 230"
+        }
+      ],
+      "trend": [
+        {
+          "month": "2026-04",
+          "raw": 3230.0,
+          "display": "3 230"
+        }
+      ],
+      "color": "green"
+    },
+    "asdEntreesSorties": {
+      "title": "Dynamique d’entrées / sorties ASD",
+      "series": [
+        {
+          "month": "2026-04",
+          "label": "avr. 2026",
+          "entrantsRaw": 1795,
+          "entrantsDisplay": "1 795",
+          "sortantsRaw": 880,
+          "sortantsDisplay": "880",
+          "netRaw": 915,
+          "netDisplay": "+915"
+        }
+      ],
+      "colors": {
+        "entrants": "green",
+        "sortants": "red",
+        "net": "gray"
+      }
+    },
+    "fmsMatriceRisque": {
+      "title": "Résultats des traitements FMS par niveau de risque",
+      "rows": [
+        {
+          "codeTypeFamille": "T1",
+          "typeFamille": "T1",
+          "codeNiveauRisque": "ELEVE",
+          "niveauRisque": "ELEVE",
+          "demandesInjecteesRaw": 3440,
+          "demandesTraiteesRaw": 2819,
+          "douteConfirmeRaw": 1161,
+          "douteConfirmePctRaw": 0.4118481731110323,
+          "douteConfirmePctDisplay": "41,2 %",
+          "douteLeveRaw": 1375,
+          "douteLevePctRaw": 0.4877616175948918,
+          "douteLevePctDisplay": "48,8 %"
+        },
+        {
+          "codeTypeFamille": "T2",
+          "typeFamille": "T2",
+          "codeNiveauRisque": "MOYEN",
+          "niveauRisque": "MOYEN",
+          "demandesInjecteesRaw": 1405,
+          "demandesTraiteesRaw": 1087,
+          "douteConfirmeRaw": 363,
+          "douteConfirmePctRaw": 0.33394664213431463,
+          "douteConfirmePctDisplay": "33,4 %",
+          "douteLeveRaw": 615,
+          "douteLevePctRaw": 0.5657773689052438,
+          "douteLevePctDisplay": "56,6 %"
+        },
+        {
+          "codeTypeFamille": "T3",
+          "typeFamille": "T3",
+          "codeNiveauRisque": "FAIBLE",
+          "niveauRisque": "FAIBLE",
+          "demandesInjecteesRaw": 485,
+          "demandesTraiteesRaw": 378,
+          "douteConfirmeRaw": 98,
+          "douteConfirmePctRaw": 0.25925925925925924,
+          "douteConfirmePctDisplay": "25,9 %",
+          "douteLeveRaw": 242,
+          "douteLevePctRaw": 0.6402116402116402,
+          "douteLevePctDisplay": "64,0 %"
+        }
+      ]
+    },
+    "menagesBloquesNational": {
+      "title": "Ménages bloqués",
+      "rows": [
+        {
+          "codeMotifBlocage": "FMS",
+          "motifBlocage": "FMS",
+          "menagesRaw": 230,
+          "menagesDisplay": "230",
+          "personnesRaw": 980,
+          "personnesDisplay": "980"
+        },
+        {
+          "codeMotifBlocage": "INDIV",
+          "motifBlocage": "INDIV",
+          "menagesRaw": 65,
+          "menagesDisplay": "65",
+          "personnesRaw": 280,
+          "personnesDisplay": "280"
+        },
+        {
+          "codeMotifBlocage": "MULTI",
+          "motifBlocage": "MULTI",
+          "menagesRaw": 62,
+          "menagesDisplay": "62",
+          "personnesRaw": 265,
+          "personnesDisplay": "265"
+        }
+      ],
+      "color": "red"
+    },
+    "fluxRegionauxAsdAmot": {
+      "title": "Entrants / Sortants ASD + AMO Tadamon par région",
+      "rows": [
+        {
+          "codeRegion": "R01",
+          "region": "R01",
+          "entrantsRaw": 1280,
+          "entrantsDisplay": "1 280",
+          "sortantsRaw": 645,
+          "sortantsDisplay": "645",
+          "netRaw": 635,
+          "netDisplay": "+635"
+        },
+        {
+          "codeRegion": "R02",
+          "region": "R02",
+          "entrantsRaw": 1515,
+          "entrantsDisplay": "1 515",
+          "sortantsRaw": 730,
+          "sortantsDisplay": "730",
+          "netRaw": 785,
+          "netDisplay": "+785"
+        },
+        {
+          "codeRegion": "R03",
+          "region": "R03",
+          "entrantsRaw": 1055,
+          "entrantsDisplay": "1 055",
+          "sortantsRaw": 520,
+          "sortantsDisplay": "520",
+          "netRaw": 535,
+          "netDisplay": "+535"
+        }
+      ],
+      "colors": {
+        "entrants": "green",
+        "sortants": "red",
+        "net": "gray"
+      }
+    },
+    "menagesBloquesRegionaux": {
+      "title": "Ménages bloqués par région",
+      "rows": [
+        {
+          "codeRegion": "R01",
+          "region": "R01",
+          "menagesRaw": 84,
+          "menagesDisplay": "84"
+        },
+        {
+          "codeRegion": "R02",
+          "region": "R02",
+          "menagesRaw": 185,
+          "menagesDisplay": "185"
+        },
+        {
+          "codeRegion": "R03",
+          "region": "R03",
+          "menagesRaw": 88,
+          "menagesDisplay": "88"
+        }
+      ],
+      "color": "red"
+    }
+  },
+  "tables": {
+    "rsuEvolution": [
+      {
+        "month": "2026-04",
+        "label": "avr. 2026",
+        "raw": 3230,
+        "display": "3 230",
+        "deltaRaw": null,
+        "deltaDisplay": null,
+        "percentRaw": null,
+        "percentDisplay": null
+      }
+    ],
+    "asdEvolution": [
+      {
+        "month": "2026-03",
+        "label": "mars 2026",
+        "entrantsRaw": 0,
+        "entrantsDisplay": "0",
+        "sortantsRaw": 0,
+        "sortantsDisplay": "0",
+        "netRaw": 0,
+        "netDisplay": "0"
+      },
+      {
+        "month": "2026-04",
+        "label": "avr. 2026",
+        "entrantsRaw": 1795,
+        "entrantsDisplay": "1 795",
+        "sortantsRaw": 880,
+        "sortantsDisplay": "880",
+        "netRaw": 915,
+        "netDisplay": "+915"
+      }
+    ],
+    "topProvincesFlux": [
+      {
+        "province": "Casablanca",
+        "entrantsRaw": 1235,
+        "sortantsRaw": 590,
+        "netRaw": 645,
+        "netDisplay": "+645"
+      },
+      {
+        "province": "Fès",
+        "entrantsRaw": 595,
+        "sortantsRaw": 295,
+        "netRaw": 300,
+        "netDisplay": "+300"
+      },
+      {
+        "province": "Salé",
+        "entrantsRaw": 510,
+        "sortantsRaw": 250,
+        "netRaw": 260,
+        "netDisplay": "+260"
+      },
+      {
+        "province": "Meknès",
+        "entrantsRaw": 460,
+        "sortantsRaw": 225,
+        "netRaw": 235,
+        "netDisplay": "+235"
+      },
+      {
+        "province": "Rabat",
+        "entrantsRaw": 420,
+        "sortantsRaw": 215,
+        "netRaw": 205,
+        "netDisplay": "+205"
+      }
+    ],
+    "topProvincesBloquees": [
+      {
+        "province": "Casablanca",
+        "menagesRaw": 185,
+        "menagesDisplay": "185"
+      },
+      {
+        "province": "Fès",
+        "menagesRaw": 60,
+        "menagesDisplay": "60"
+      },
+      {
+        "province": "Rabat",
+        "menagesRaw": 50,
+        "menagesDisplay": "50"
+      },
+      {
+        "province": "Salé",
+        "menagesRaw": 34,
+        "menagesDisplay": "34"
+      },
+      {
+        "province": "Meknès",
+        "menagesRaw": 28,
+        "menagesDisplay": "28"
+      }
+    ]
+  },
+  "footnotes": [
+    "Pic d'inscriptions à Casablanca",
+    "ASD: 18 ménages non communiqués par la CNRA.",
+    "AMO Tadamon: 14 ménages non communiqués par la CNSS."
+  ],
+  "validationSummary": {
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  }
+}

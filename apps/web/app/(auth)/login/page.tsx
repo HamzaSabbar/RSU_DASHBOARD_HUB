@@ -4,9 +4,13 @@ import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage(): Promise<React.ReactElement> {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { reauth?: string };
+}): Promise<React.ReactElement> {
   const session = await auth();
-  if (session) redirect("/dashboard");
+  if (session && searchParams?.reauth !== "1") redirect("/dashboard");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-bg p-6">

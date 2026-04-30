@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 const API_URL_INTERNAL =
   process.env.API_URL_INTERNAL ?? "http://api:8000";
@@ -22,7 +23,7 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   const session = (await auth()) as (Record<string, unknown> | null);
   const accessToken = session?.accessToken as string | undefined;
   if (!accessToken) {
-    throw new ApiError("unauthenticated", 401, null);
+    redirect("/login?reauth=1");
   }
 
   const url = new URL(path.replace(/^\//, ""), `${API_URL_INTERNAL}/`);
@@ -50,6 +51,9 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
       body = await res.json();
     } catch {
       // ignore
+    }
+    if (res.status === 401) {
+      redirect("/login?reauth=1");
     }
     throw new ApiError(`API ${res.status} on ${path}`, res.status, body);
   }

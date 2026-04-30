@@ -1,0 +1,754 @@
+{
+  "meta": {
+    "jobId": "befd19ea-443c-469b-afd4-8d7972873643",
+    "idChargement": "MOCK_2026W16",
+    "titreRapport": "Tableau de bord hebdomadaire de suivi RSU",
+    "dateRapport": "2026-04-21",
+    "dateReferenceDonnees": "2026-04-21",
+    "locale": "fr-MA",
+    "moisReportingCourant": "2026-04",
+    "moisPartiel": true,
+    "terminologie": {
+      "RSU": "Registre Social Unifié",
+      "RNP": "Registre National de la Population",
+      "ASD": "Aide Sociale Directe",
+      "AMO_TADAMON": "AMO Tadamon",
+      "FMS": "Fraud Management System"
+    }
+  },
+  "layout": {
+    "palette": {
+      "positive": "green",
+      "main": "green",
+      "risk": "red",
+      "exit": "red",
+      "neutral": "gray"
+    },
+    "regionOrder": [
+      "CAS",
+      "MKS",
+      "RSK",
+      "FM",
+      "TTA",
+      "BMK",
+      "SM",
+      "ORI",
+      "DT",
+      "GON",
+      "LSH",
+      "DOD"
+    ]
+  },
+  "cards": {
+    "inscriptions": {
+      "title": "Chiffres clés des inscriptions",
+      "rnpPersonnesTotal": {
+        "label": "RNP - personnes",
+        "raw": 23128900,
+        "display": "23 128 900",
+        "compactDisplay": "23,1 M",
+        "color": "green"
+      },
+      "rsuMenagesTotal": {
+        "label": "RSU - ménages",
+        "raw": 5481960,
+        "display": "5 481 960",
+        "compactDisplay": "5,5 M",
+        "color": "green"
+      },
+      "rsuPersonnesTotal": {
+        "label": "RSU - personnes",
+        "raw": 20204380,
+        "display": "20 204 380",
+        "compactDisplay": "20,2 M",
+        "color": "green"
+      },
+      "nouvellesInscriptionsMois": {
+        "label": "Nouvelles inscriptions",
+        "raw": 14926,
+        "display": "14 926",
+        "compactDisplay": "14,9 k",
+        "color": "green"
+      },
+      "evolutionMois": {
+        "label": "Évolution vs mois précédent",
+        "raw": 14926,
+        "display": "+14 926",
+        "percentRaw": null,
+        "percentDisplay": null,
+        "color": "green"
+      }
+    },
+    "programmesSociaux": {
+      "title": "Programmes sociaux",
+      "asdMenagesActifs": {
+        "label": "ASD - ménages actifs",
+        "raw": 3928420,
+        "display": "3 928 420",
+        "compactDisplay": "3,9 M",
+        "color": "green"
+      },
+      "asdPersonnesActives": {
+        "label": "ASD - personnes actives",
+        "raw": 12706880,
+        "display": "12 706 880",
+        "compactDisplay": "12,7 M",
+        "color": "green"
+      },
+      "amoMenagesActifs": {
+        "label": "AMO Tadamon - ménages actifs",
+        "raw": 2884510,
+        "display": "2 884 510",
+        "compactDisplay": "2,9 M",
+        "color": "green"
+      },
+      "amoPersonnesActives": {
+        "label": "AMO Tadamon - personnes actives",
+        "raw": 11257640,
+        "display": "11 257 640",
+        "compactDisplay": "11,3 M",
+        "color": "green"
+      }
+    },
+    "traitementFms": {
+      "title": "Traitement FMS",
+      "demandesInjectees": {
+        "label": "Demandes injectées",
+        "raw": 600975,
+        "display": "600 975",
+        "compactDisplay": "601,0 k",
+        "color": "gray"
+      },
+      "demandesTraitees": {
+        "label": "Demandes traitées",
+        "raw": 510013,
+        "display": "510 013",
+        "compactDisplay": "510,0 k",
+        "color": "gray"
+      },
+      "tauxTraitementPct": {
+        "label": "Taux de traitement",
+        "raw": 0.8486426224052581,
+        "display": "84,9 %",
+        "color": "gray"
+      }
+    },
+    "resultatFms": {
+      "title": "Résultat FMS",
+      "douteConfirme": {
+        "label": "Doute confirmé",
+        "raw": 143945,
+        "display": "143 945",
+        "compactDisplay": "143,9 k",
+        "color": "red"
+      },
+      "douteConfirmePct": {
+        "label": "Doute confirmé",
+        "raw": 0.2822379037397086,
+        "display": "28,2 %",
+        "color": "red"
+      },
+      "douteLeve": {
+        "label": "Doute levé",
+        "raw": 366068,
+        "display": "366 068",
+        "compactDisplay": "366,1 k",
+        "color": "gray"
+      },
+      "douteLevePct": {
+        "label": "Doute levé",
+        "raw": 0.7177620962602914,
+        "display": "71,8 %",
+        "color": "gray"
+      }
+    },
+    "radiationFraude": {
+      "title": "Radiation pour fraude",
+      "asdMenagesRadies": {
+        "label": "ASD - ménages radiés",
+        "raw": 779,
+        "display": "779",
+        "compactDisplay": "779",
+        "color": "red"
+      },
+      "amoMenagesRadies": {
+        "label": "AMO Tadamon - ménages radiés",
+        "raw": 91,
+        "display": "91",
+        "compactDisplay": "91",
+        "color": "red"
+      },
+      "totalMenagesRadies": {
+        "label": "Total ménages radiés",
+        "raw": 870,
+        "display": "870",
+        "compactDisplay": "870",
+        "color": "red"
+      },
+      "totalPersonnesRadiees": {
+        "label": "Total personnes radiées",
+        "raw": 2913,
+        "display": "2 913",
+        "compactDisplay": "2,9 k",
+        "color": "red"
+      },
+      "savingAnnualRaw": 6305520.0,
+      "savingAnnualDisplay": "6,3 M Dhs/an",
+      "color": "red"
+    },
+    "rescoring": {
+      "title": "Rescoring",
+      "asdMenagesSortants": {
+        "label": "ASD - ménages sortants",
+        "raw": 1654,
+        "display": "1 654",
+        "compactDisplay": "1,7 k",
+        "color": "red"
+      },
+      "amoMenagesSortants": {
+        "label": "AMO Tadamon - ménages sortants",
+        "raw": 313,
+        "display": "313",
+        "compactDisplay": "313",
+        "color": "red"
+      },
+      "menagesNonCommuniques": {
+        "label": "Ménages non communiqués",
+        "raw": 409,
+        "display": "409",
+        "compactDisplay": "409",
+        "color": "gray"
+      },
+      "savingAnnualRaw": 13689960.0,
+      "savingAnnualDisplay": "13,7 M Dhs/an"
+    },
+    "economieBudgetaire": {
+      "title": "Économie budgétaire totale",
+      "fraude": {
+        "label": "Fraude",
+        "raw": 6305520.0,
+        "display": "6,3 M Dhs/an",
+        "color": "red"
+      },
+      "rescoring": {
+        "label": "Rescoring",
+        "raw": 13689960.0,
+        "display": "13,7 M Dhs/an",
+        "color": "gray"
+      },
+      "total": {
+        "label": "Total optimisation",
+        "raw": 19995480.0,
+        "display": "20,0 M Dhs/an",
+        "color": "green"
+      }
+    }
+  },
+  "charts": {
+    "rsuInscriptionsMensuelles": {
+      "title": "Dynamique des inscriptions au RSU",
+      "unit": "MENAGES",
+      "series": [
+        {
+          "month": "2026-04",
+          "label": "avr. 2026 *",
+          "raw": 14926,
+          "display": "14 926"
+        }
+      ],
+      "trend": [
+        {
+          "month": "2026-04",
+          "raw": 14926.0,
+          "display": "14 926"
+        }
+      ],
+      "color": "green"
+    },
+    "asdEntreesSorties": {
+      "title": "Dynamique d’entrées / sorties ASD",
+      "series": [
+        {
+          "month": "2026-04",
+          "label": "avr. 2026",
+          "entrantsRaw": 13124,
+          "entrantsDisplay": "13 124",
+          "sortantsRaw": 7730,
+          "sortantsDisplay": "7 730",
+          "netRaw": 5394,
+          "netDisplay": "+5 394"
+        }
+      ],
+      "colors": {
+        "entrants": "green",
+        "sortants": "red",
+        "net": "gray"
+      }
+    },
+    "fmsMatriceRisque": {
+      "title": "Résultats des traitements FMS par niveau de risque",
+      "rows": [
+        {
+          "codeTypeFamille": "INDIVIDUEL",
+          "typeFamille": "Cas individuel",
+          "codeNiveauRisque": "ELEVE",
+          "niveauRisque": "Cas FMS à risque élevé",
+          "demandesInjecteesRaw": 97430,
+          "demandesTraiteesRaw": 86112,
+          "douteConfirmeRaw": 28835,
+          "douteConfirmePctRaw": 0.33485460795243405,
+          "douteConfirmePctDisplay": "33,5 %",
+          "douteLeveRaw": 57277,
+          "douteLevePctRaw": 0.665145392047566,
+          "douteLevePctDisplay": "66,5 %"
+        },
+        {
+          "codeTypeFamille": "INDIVIDUEL",
+          "typeFamille": "Cas individuel",
+          "codeNiveauRisque": "MOYEN",
+          "niveauRisque": "Cas FMS à risque moyen",
+          "demandesInjecteesRaw": 263780,
+          "demandesTraiteesRaw": 211420,
+          "douteConfirmeRaw": 47620,
+          "douteConfirmePctRaw": 0.2252388610349068,
+          "douteConfirmePctDisplay": "22,5 %",
+          "douteLeveRaw": 163800,
+          "douteLevePctRaw": 0.7747611389650931,
+          "douteLevePctDisplay": "77,5 %"
+        },
+        {
+          "codeTypeFamille": "MARIES_AVEC_ENFANTS",
+          "typeFamille": "Ménage marié avec enfants",
+          "codeNiveauRisque": "ELEVE",
+          "niveauRisque": "Cas FMS à risque élevé",
+          "demandesInjecteesRaw": 9240,
+          "demandesTraiteesRaw": 7876,
+          "douteConfirmeRaw": 3148,
+          "douteConfirmePctRaw": 0.39969527679024885,
+          "douteConfirmePctDisplay": "40,0 %",
+          "douteLeveRaw": 4728,
+          "douteLevePctRaw": 0.6003047232097511,
+          "douteLevePctDisplay": "60,0 %"
+        },
+        {
+          "codeTypeFamille": "MARIES_AVEC_ENFANTS",
+          "typeFamille": "Ménage marié avec enfants",
+          "codeNiveauRisque": "MOYEN",
+          "niveauRisque": "Cas FMS à risque moyen",
+          "demandesInjecteesRaw": 3085,
+          "demandesTraiteesRaw": 2744,
+          "douteConfirmeRaw": 933,
+          "douteConfirmePctRaw": 0.3400145772594752,
+          "douteConfirmePctDisplay": "34,0 %",
+          "douteLeveRaw": 1811,
+          "douteLevePctRaw": 0.6599854227405247,
+          "douteLevePctDisplay": "66,0 %"
+        },
+        {
+          "codeTypeFamille": "MONOPARENTAL",
+          "typeFamille": "Ménage monoparental",
+          "codeNiveauRisque": "ELEVE",
+          "niveauRisque": "Cas FMS à risque élevé",
+          "demandesInjecteesRaw": 15890,
+          "demandesTraiteesRaw": 13305,
+          "douteConfirmeRaw": 4675,
+          "douteConfirmePctRaw": 0.3513716647876738,
+          "douteConfirmePctDisplay": "35,1 %",
+          "douteLeveRaw": 8630,
+          "douteLevePctRaw": 0.6486283352123262,
+          "douteLevePctDisplay": "64,9 %"
+        },
+        {
+          "codeTypeFamille": "MONOPARENTAL",
+          "typeFamille": "Ménage monoparental",
+          "codeNiveauRisque": "MOYEN",
+          "niveauRisque": "Cas FMS à risque moyen",
+          "demandesInjecteesRaw": 46840,
+          "demandesTraiteesRaw": 37218,
+          "douteConfirmeRaw": 13392,
+          "douteConfirmePctRaw": 0.3598258906980493,
+          "douteConfirmePctDisplay": "36,0 %",
+          "douteLeveRaw": 23826,
+          "douteLevePctRaw": 0.6401741093019506,
+          "douteLevePctDisplay": "64,0 %"
+        },
+        {
+          "codeTypeFamille": "MULTI_NOYAU",
+          "typeFamille": "Ménage multi-noyau artificiel ou éclaté",
+          "codeNiveauRisque": "ELEVE",
+          "niveauRisque": "Cas FMS à risque élevé",
+          "demandesInjecteesRaw": 74490,
+          "demandesTraiteesRaw": 68128,
+          "douteConfirmeRaw": 21462,
+          "douteConfirmePctRaw": 0.31502465946453734,
+          "douteConfirmePctDisplay": "31,5 %",
+          "douteLeveRaw": 46666,
+          "douteLevePctRaw": 0.6849753405354626,
+          "douteLevePctDisplay": "68,5 %"
+        },
+        {
+          "codeTypeFamille": "MULTI_NOYAU",
+          "typeFamille": "Ménage multi-noyau artificiel ou éclaté",
+          "codeNiveauRisque": "MOYEN",
+          "niveauRisque": "Cas FMS à risque moyen",
+          "demandesInjecteesRaw": 90220,
+          "demandesTraiteesRaw": 83210,
+          "douteConfirmeRaw": 23880,
+          "douteConfirmePctRaw": 0.2869847374113688,
+          "douteConfirmePctDisplay": "28,7 %",
+          "douteLeveRaw": 59330,
+          "douteLevePctRaw": 0.7130152625886311,
+          "douteLevePctDisplay": "71,3 %"
+        }
+      ]
+    },
+    "menagesBloquesNational": {
+      "title": "Ménages bloqués",
+      "rows": [
+        {
+          "codeMotifBlocage": "FMS_FRAUD",
+          "motifBlocage": "Bloqué suite à une fraude FMS",
+          "menagesRaw": 2022,
+          "menagesDisplay": "2 022",
+          "personnesRaw": 6882,
+          "personnesDisplay": "6 882"
+        },
+        {
+          "codeMotifBlocage": "PROCEDURE_INDIVIDUEL",
+          "motifBlocage": "Bloqué pour procédure individuel",
+          "menagesRaw": 1416,
+          "menagesDisplay": "1 416",
+          "personnesRaw": 4628,
+          "personnesDisplay": "4 628"
+        },
+        {
+          "codeMotifBlocage": "PROCEDURE_MULTI_NOYAU",
+          "motifBlocage": "Bloqué pour procédure multi-noyau",
+          "menagesRaw": 1372,
+          "menagesDisplay": "1 372",
+          "personnesRaw": 4871,
+          "personnesDisplay": "4 871"
+        }
+      ],
+      "color": "red"
+    },
+    "fluxRegionauxAsdAmot": {
+      "title": "Entrants / Sortants ASD + AMO Tadamon par région",
+      "rows": [
+        {
+          "codeRegion": "CAS",
+          "region": "Casablanca-Settat",
+          "entrantsRaw": 2012,
+          "entrantsDisplay": "2 012",
+          "sortantsRaw": 1188,
+          "sortantsDisplay": "1 188",
+          "netRaw": 824,
+          "netDisplay": "+824"
+        },
+        {
+          "codeRegion": "MKS",
+          "region": "Marrakech-Safi",
+          "entrantsRaw": 2152,
+          "entrantsDisplay": "2 152",
+          "sortantsRaw": 1259,
+          "sortantsDisplay": "1 259",
+          "netRaw": 893,
+          "netDisplay": "+893"
+        },
+        {
+          "codeRegion": "RSK",
+          "region": "Rabat-Salé-Kénitra",
+          "entrantsRaw": 3816,
+          "entrantsDisplay": "3 816",
+          "sortantsRaw": 2222,
+          "sortantsDisplay": "2 222",
+          "netRaw": 1594,
+          "netDisplay": "+1 594"
+        },
+        {
+          "codeRegion": "FM",
+          "region": "Fès-Meknès",
+          "entrantsRaw": 806,
+          "entrantsDisplay": "806",
+          "sortantsRaw": 479,
+          "sortantsDisplay": "479",
+          "netRaw": 327,
+          "netDisplay": "+327"
+        },
+        {
+          "codeRegion": "TTA",
+          "region": "Tanger-Tétouan-Al Hoceïma",
+          "entrantsRaw": 2581,
+          "entrantsDisplay": "2 581",
+          "sortantsRaw": 1432,
+          "sortantsDisplay": "1 432",
+          "netRaw": 1149,
+          "netDisplay": "+1 149"
+        },
+        {
+          "codeRegion": "BMK",
+          "region": "Béni Mellal-Khénifra",
+          "entrantsRaw": 981,
+          "entrantsDisplay": "981",
+          "sortantsRaw": 426,
+          "sortantsDisplay": "426",
+          "netRaw": 555,
+          "netDisplay": "+555"
+        },
+        {
+          "codeRegion": "SM",
+          "region": "Souss-Massa",
+          "entrantsRaw": 772,
+          "entrantsDisplay": "772",
+          "sortantsRaw": 482,
+          "sortantsDisplay": "482",
+          "netRaw": 290,
+          "netDisplay": "+290"
+        },
+        {
+          "codeRegion": "ORI",
+          "region": "Oriental",
+          "entrantsRaw": 752,
+          "entrantsDisplay": "752",
+          "sortantsRaw": 344,
+          "sortantsDisplay": "344",
+          "netRaw": 408,
+          "netDisplay": "+408"
+        },
+        {
+          "codeRegion": "DT",
+          "region": "Drâa-Tafilalet",
+          "entrantsRaw": 451,
+          "entrantsDisplay": "451",
+          "sortantsRaw": 291,
+          "sortantsDisplay": "291",
+          "netRaw": 160,
+          "netDisplay": "+160"
+        },
+        {
+          "codeRegion": "GON",
+          "region": "Guelmim-Oued Noun",
+          "entrantsRaw": 0,
+          "entrantsDisplay": "0",
+          "sortantsRaw": 0,
+          "sortantsDisplay": "0",
+          "netRaw": 0,
+          "netDisplay": "0"
+        },
+        {
+          "codeRegion": "LSH",
+          "region": "Laâyoune-Sakia El Hamra",
+          "entrantsRaw": 443,
+          "entrantsDisplay": "443",
+          "sortantsRaw": 243,
+          "sortantsDisplay": "243",
+          "netRaw": 200,
+          "netDisplay": "+200"
+        },
+        {
+          "codeRegion": "DOD",
+          "region": "Dakhla-Oued Ed-Dahab",
+          "entrantsRaw": 0,
+          "entrantsDisplay": "0",
+          "sortantsRaw": 0,
+          "sortantsDisplay": "0",
+          "netRaw": 0,
+          "netDisplay": "0"
+        }
+      ],
+      "colors": {
+        "entrants": "green",
+        "sortants": "red",
+        "net": "gray"
+      }
+    },
+    "menagesBloquesRegionaux": {
+      "title": "Ménages bloqués par région",
+      "rows": [
+        {
+          "codeRegion": "CAS",
+          "region": "Casablanca-Settat",
+          "menagesRaw": 397,
+          "menagesDisplay": "397"
+        },
+        {
+          "codeRegion": "MKS",
+          "region": "Marrakech-Safi",
+          "menagesRaw": 412,
+          "menagesDisplay": "412"
+        },
+        {
+          "codeRegion": "RSK",
+          "region": "Rabat-Salé-Kénitra",
+          "menagesRaw": 2157,
+          "menagesDisplay": "2 157"
+        },
+        {
+          "codeRegion": "FM",
+          "region": "Fès-Meknès",
+          "menagesRaw": 268,
+          "menagesDisplay": "268"
+        },
+        {
+          "codeRegion": "TTA",
+          "region": "Tanger-Tétouan-Al Hoceïma",
+          "menagesRaw": 323,
+          "menagesDisplay": "323"
+        },
+        {
+          "codeRegion": "BMK",
+          "region": "Béni Mellal-Khénifra",
+          "menagesRaw": 541,
+          "menagesDisplay": "541"
+        },
+        {
+          "codeRegion": "SM",
+          "region": "Souss-Massa",
+          "menagesRaw": 712,
+          "menagesDisplay": "712"
+        },
+        {
+          "codeRegion": "ORI",
+          "region": "Oriental",
+          "menagesRaw": 0,
+          "menagesDisplay": "0"
+        },
+        {
+          "codeRegion": "DT",
+          "region": "Drâa-Tafilalet",
+          "menagesRaw": 0,
+          "menagesDisplay": "0"
+        },
+        {
+          "codeRegion": "GON",
+          "region": "Guelmim-Oued Noun",
+          "menagesRaw": 0,
+          "menagesDisplay": "0"
+        },
+        {
+          "codeRegion": "LSH",
+          "region": "Laâyoune-Sakia El Hamra",
+          "menagesRaw": 0,
+          "menagesDisplay": "0"
+        },
+        {
+          "codeRegion": "DOD",
+          "region": "Dakhla-Oued Ed-Dahab",
+          "menagesRaw": 0,
+          "menagesDisplay": "0"
+        }
+      ],
+      "color": "red"
+    }
+  },
+  "tables": {
+    "rsuEvolution": [
+      {
+        "month": "2026-04",
+        "label": "avr. 2026 *",
+        "raw": 14926,
+        "display": "14 926",
+        "deltaRaw": null,
+        "deltaDisplay": null,
+        "percentRaw": null,
+        "percentDisplay": null
+      }
+    ],
+    "asdEvolution": [
+      {
+        "month": "2026-03",
+        "label": "mars 2026",
+        "entrantsRaw": 0,
+        "entrantsDisplay": "0",
+        "sortantsRaw": 0,
+        "sortantsDisplay": "0",
+        "netRaw": 0,
+        "netDisplay": "0"
+      },
+      {
+        "month": "2026-04",
+        "label": "avr. 2026",
+        "entrantsRaw": 13124,
+        "entrantsDisplay": "13 124",
+        "sortantsRaw": 7730,
+        "sortantsDisplay": "7 730",
+        "netRaw": 5394,
+        "netDisplay": "+5 394"
+      }
+    ],
+    "topProvincesFlux": [
+      {
+        "province": "KÉNITRA",
+        "entrantsRaw": 2452,
+        "sortantsRaw": 1457,
+        "netRaw": 995,
+        "netDisplay": "+995"
+      },
+      {
+        "province": "EL JADIDA",
+        "entrantsRaw": 2012,
+        "sortantsRaw": 1188,
+        "netRaw": 824,
+        "netDisplay": "+824"
+      },
+      {
+        "province": "TANGER-ASSILAH",
+        "entrantsRaw": 1524,
+        "sortantsRaw": 824,
+        "netRaw": 700,
+        "netDisplay": "+700"
+      },
+      {
+        "province": "BÉNI MELLAL",
+        "entrantsRaw": 981,
+        "sortantsRaw": 426,
+        "netRaw": 555,
+        "netDisplay": "+555"
+      },
+      {
+        "province": "CHICHAOUA",
+        "entrantsRaw": 1115,
+        "sortantsRaw": 639,
+        "netRaw": 476,
+        "netDisplay": "+476"
+      }
+    ],
+    "topProvincesBloquees": [
+      {
+        "province": "TAROUDANT",
+        "menagesRaw": 712,
+        "menagesDisplay": "712"
+      },
+      {
+        "province": "SIDI SLIMANE",
+        "menagesRaw": 615,
+        "menagesDisplay": "615"
+      },
+      {
+        "province": "SIDI KACEM",
+        "menagesRaw": 552,
+        "menagesDisplay": "552"
+      },
+      {
+        "province": "BÉNI MELLAL",
+        "menagesRaw": 541,
+        "menagesDisplay": "541"
+      },
+      {
+        "province": "KHÉMISSET",
+        "menagesRaw": 501,
+        "menagesDisplay": "501"
+      }
+    ]
+  },
+  "footnotes": [
+    "Batch W16 avril",
+    "ASD: 257 ménages non communiqués par la CNRA.",
+    "AMO Tadamon: 152 ménages non communiqués par la CNSS."
+  ],
+  "validationSummary": {
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  }
+}
