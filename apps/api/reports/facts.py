@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (
@@ -43,6 +43,26 @@ async def active_batch_exists(session: AsyncSession, id_chargement: str) -> bool
     return existing is not None
 
 
+async def active_period_batch_exists(
+    session: AsyncSession,
+    *,
+    systeme_source: str,
+    period_start: date,
+    period_end: date,
+) -> bool:
+    existing = await session.scalar(
+        select(ReportUploadBatch.id)
+        .where(
+            _source_filter(systeme_source),
+            ReportUploadBatch.period_start == period_start,
+            ReportUploadBatch.period_end == period_end,
+            ReportUploadBatch.is_active.is_(True),
+        )
+        .limit(1)
+    )
+    return existing is not None
+
+
 async def ingest_report_batch(
     session: AsyncSession,
     *,
@@ -53,25 +73,44 @@ async def ingest_report_batch(
     id_chargement = metadata.get("id_chargement") or record.id_chargement
     if not id_chargement:
         raise ValueError("id_chargement manquant pour l'ingestion cumulative")
+    systeme_source = str(metadata.get("systeme_source") or "system")
+    period_start = _date(metadata.get("debut_periode"))
+    period_end = _date(metadata.get("fin_periode"))
+    if period_start is None or period_end is None:
+        raise ValueError("Période de chargement manquante pour l'ingestion cumulative")
 
-    active = list(
+    active_for_source = list(
         await session.scalars(
             select(ReportUploadBatch)
             .where(
-                ReportUploadBatch.id_chargement == str(id_chargement),
+                _source_filter(systeme_source),
                 ReportUploadBatch.is_active.is_(True),
             )
             .with_for_update()
         )
     )
-    if active and not record.replace_requested:
+    exact_period = [
+        batch
+        for batch in active_for_source
+        if batch.period_start == period_start and batch.period_end == period_end
+    ]
+    overlapping = [
+        batch
+        for batch in active_for_source
+        if batch not in exact_period
+        and batch.period_start is not None
+        and batch.period_end is not None
+        and _periods_overlap(period_start, period_end, batch.period_start, batch.period_end)
+    ]
+    if overlapping:
         raise ValueError(
-            "Chargement déjà existant. Relancez l'upload avec replace=true pour le remplacer."
+            "Période de chargement chevauchante déjà active pour cette source. "
+            "Corrigez ou remplacez la période existante avant d'importer ce fichier."
         )
 
     batch_id = uuid.uuid4()
     now = datetime.now(tz=UTC)
-    for old_batch in active:
+    for old_batch in exact_period:
         old_batch.status = "superseded"
         old_batch.is_active = False
         old_batch.superseded_at = now
@@ -88,6 +127,7 @@ async def ingest_report_batch(
         period_start=_date(metadata.get("debut_periode")),
         period_end=_date(metadata.get("fin_periode")),
         reference_date=_date(metadata.get("date_reference_donnees")),
+        systeme_source=systeme_source,
         metadata_json=metadata,
         raw_object_path=record.raw_object_path,
         normalized_object_path=_required_path(record.normalized_object_path, "normalized"),
@@ -97,7 +137,7 @@ async def ingest_report_batch(
     )
     session.add(batch)
     await session.flush()
-    for old_batch in active:
+    for old_batch in exact_period:
         old_batch.superseded_by_batch_id = batch.id
     await session.flush()
 
@@ -177,8 +217,8 @@ async def normalized_for_range(
         "amo_flow": await _program_flow(session, "AMO_TADAMON", start, end),
         "amo_rescoring": await _program_rescoring(session, "AMO_TADAMON", start, end),
         "amo_fraud": await _program_fraud(session, "AMO_TADAMON", start, end),
-        "fms_treatment": await _fms_treatment(session, snapshot_batch),
-        "fms_blocked": await _fms_blocked(session, snapshot_batch),
+        "fms_treatment": await _fms_treatment(session, start, end),
+        "fms_blocked": await _fms_blocked(session, start, end),
         "amount_rules": await _amount_rules(session, end),
     }
     if not _normalized_has_dashboard_data(normalized):
@@ -213,10 +253,10 @@ async def available_periods(session: AsyncSession) -> dict[str, Any]:
         (ReportProgramFlowFact, "date_evenement"),
         (ReportProgramRescoringFact, "date_evenement"),
         (ReportProgramFraudFact, "date_evenement"),
+        (ReportFmsTreatmentFact, "date_evenement"),
+        (ReportFmsBlockedFact, "date_evenement"),
         (ReportRsuStockFact, "date_reference"),
         (ReportProgramStockFact, "date_reference"),
-        (ReportFmsTreatmentFact, "date_reference"),
-        (ReportFmsBlockedFact, "date_reference"),
     ):
         low, high = await _min_max_active(session, model, field_name)
         if low:
@@ -230,8 +270,8 @@ async def available_periods(session: AsyncSession) -> dict[str, Any]:
         "maxDate": max(max_dates).isoformat() if max_dates else None,
         "latestReferenceDate": _iso(latest.reference_date),
         "latestReportDate": _iso(latest.report_date),
-        "defaultStartDate": _iso(latest.period_start or latest.reference_date or latest.report_date),
-        "defaultEndDate": _iso(latest.period_end or latest.reference_date or latest.report_date),
+        "defaultStartDate": min(min_dates).isoformat() if min_dates else _iso(latest.period_start),
+        "defaultEndDate": max(max_dates).isoformat() if max_dates else _iso(latest.period_end),
         "activeUploadBatches": [
             {
                 "batchId": str(batch.id),
@@ -241,6 +281,7 @@ async def available_periods(session: AsyncSession) -> dict[str, Any]:
                 "debutPeriode": _iso(batch.period_start),
                 "finPeriode": _iso(batch.period_end),
                 "dateReferenceDonnees": _iso(batch.reference_date),
+                "systemeSource": batch.systeme_source,
                 "createdAt": batch.created_at.isoformat(),
             }
             for batch in batches
@@ -252,6 +293,7 @@ def _normalized_has_dashboard_data(normalized: dict[str, Any]) -> bool:
     data_keys = (
         "rsu_stock",
         "rsu_new_registrations",
+        "rsu_household_registrations",
         "asd_stock",
         "asd_flow",
         "asd_rescoring",
@@ -332,7 +374,11 @@ def _add_rsu_facts(
                 commentaires=row.get("commentaires"),
             )
         )
-    for row in normalized.get("rsu_new_registrations", []):
+    registration_rows = [
+        *normalized.get("rsu_new_registrations", []),
+        *normalized.get("rsu_household_registrations", []),
+    ]
+    for row in registration_rows:
         session.add(
             ReportRsuFlowFact(
                 id=uuid.uuid4(),
@@ -345,6 +391,7 @@ def _add_rsu_facts(
                 mois_evenement=str(row.get("mois_evenement") or ""),
                 code_region=row.get("code_region"),
                 nom_province=row.get("nom_province"),
+                code_registre=str(row.get("code_registre") or "RNP"),
                 type_unite=str(row.get("type_unite") or ""),
                 nb_nouvelles_inscriptions=int(row.get("nb_nouvelles_inscriptions") or 0),
                 mode_source=row.get("mode_source"),
@@ -472,6 +519,10 @@ def _add_fms_facts(
                 job_id=uuid.UUID(record.id),
                 source_row=_source_row(row),
                 date_reference=_required_date(row.get("date_reference")),
+                debut_periode=_date(row.get("debut_periode")),
+                fin_periode=_date(row.get("fin_periode")),
+                date_evenement=_date(row.get("date_evenement")),
+                mois_evenement=row.get("mois_evenement"),
                 code_type_famille=str(row.get("code_type_famille") or ""),
                 code_niveau_risque=str(row.get("code_niveau_risque") or ""),
                 code_perimetre_programme=row.get("code_perimetre_programme"),
@@ -494,6 +545,10 @@ def _add_fms_facts(
                 job_id=uuid.UUID(record.id),
                 source_row=_source_row(row),
                 date_reference=_required_date(row.get("date_reference")),
+                debut_periode=_date(row.get("debut_periode")),
+                fin_periode=_date(row.get("fin_periode")),
+                date_evenement=_date(row.get("date_evenement")),
+                mois_evenement=row.get("mois_evenement"),
                 code_motif_blocage=str(row.get("code_motif_blocage") or ""),
                 code_type_famille=row.get("code_type_famille"),
                 code_region=row.get("code_region"),
@@ -532,6 +587,24 @@ def _add_amount_rules(
         )
 
 
+def _periods_overlap(
+    start_a: date,
+    end_a: date,
+    start_b: date,
+    end_b: date,
+) -> bool:
+    return start_a <= end_b and start_b <= end_a
+
+
+def _source_filter(systeme_source: str):
+    if systeme_source == "system":
+        return or_(
+            ReportUploadBatch.systeme_source == systeme_source,
+            ReportUploadBatch.systeme_source.is_(None),
+        )
+    return ReportUploadBatch.systeme_source == systeme_source
+
+
 async def _resolve_range(
     session: AsyncSession,
     start_date: date | None,
@@ -557,8 +630,8 @@ async def _resolve_range(
     min_date = _date(available.get("minDate"))
     max_date = _date(available.get("maxDate"))
     if start_date is None and end_date is None:
-        end = latest.period_end or latest.reference_date or latest.report_date or max_date
-        start = latest.period_start or end
+        start = min_date or latest.period_start or latest.reference_date or latest.report_date
+        end = max_date or latest.period_end or latest.reference_date or latest.report_date
     else:
         end = end_date or max_date or latest.period_end or latest.reference_date or latest.report_date
         start = start_date or min_date or end
@@ -676,6 +749,7 @@ async def _rsu_flow(session: AsyncSession, start: date, end: date) -> list[dict[
             "mois_evenement": row.mois_evenement,
             "code_region": row.code_region,
             "nom_province": row.nom_province,
+            "code_registre": row.code_registre,
             "type_unite": row.type_unite,
             "nb_nouvelles_inscriptions": row.nb_nouvelles_inscriptions,
             "mode_source": row.mode_source,
@@ -839,20 +913,24 @@ async def _program_fraud(
 
 async def _fms_treatment(
     session: AsyncSession,
-    snapshot_batch: ReportUploadBatch | None,
+    start: date,
+    end: date,
 ) -> list[dict[str, Any]]:
-    if snapshot_batch is None:
-        return []
     rows = await _active_rows(
         session,
         ReportFmsTreatmentFact,
-        ReportFmsTreatmentFact.batch_id == snapshot_batch.id,
+        ReportFmsTreatmentFact.date_evenement >= start,
+        ReportFmsTreatmentFact.date_evenement <= end,
     )
     return [
         {
             "_row": row.source_row,
             "id_chargement": "",
             "date_reference": _iso(row.date_reference),
+            "debut_periode": _iso(row.debut_periode),
+            "fin_periode": _iso(row.fin_periode),
+            "date_evenement": _iso(row.date_evenement),
+            "mois_evenement": row.mois_evenement,
             "code_type_famille": row.code_type_famille,
             "code_niveau_risque": row.code_niveau_risque,
             "code_perimetre_programme": row.code_perimetre_programme,
@@ -872,20 +950,24 @@ async def _fms_treatment(
 
 async def _fms_blocked(
     session: AsyncSession,
-    snapshot_batch: ReportUploadBatch | None,
+    start: date,
+    end: date,
 ) -> list[dict[str, Any]]:
-    if snapshot_batch is None:
-        return []
     rows = await _active_rows(
         session,
         ReportFmsBlockedFact,
-        ReportFmsBlockedFact.batch_id == snapshot_batch.id,
+        ReportFmsBlockedFact.date_evenement >= start,
+        ReportFmsBlockedFact.date_evenement <= end,
     )
     return [
         {
             "_row": row.source_row,
             "id_chargement": "",
             "date_reference": _iso(row.date_reference),
+            "debut_periode": _iso(row.debut_periode),
+            "fin_periode": _iso(row.fin_periode),
+            "date_evenement": _iso(row.date_evenement),
+            "mois_evenement": row.mois_evenement,
             "code_motif_blocage": row.code_motif_blocage,
             "code_type_famille": row.code_type_famille,
             "code_region": row.code_region,

@@ -1,0 +1,524 @@
+{
+  "jobId": "d2d6eb23-1938-4bb6-bdd7-31254205d6ef",
+  "idChargement": "JOB_d2d6eb23-1938-4bb6-bdd7-31254205d6ef",
+  "summary": {
+    "errors": 57,
+    "warnings": 0,
+    "infos": 0
+  },
+  "messages": [
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 14,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 23,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 32,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 35,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 39,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 54,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 59,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 75,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 44,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 45,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 46,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 47,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 48,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 49,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 50,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 51,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 43,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 44,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 45,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 46,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 47,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 48,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 49,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 50,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 47,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 48,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 49,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 50,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 51,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 52,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 53,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 54,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 129,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 130,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 131,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 132,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 133,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 134,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 135,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 136,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 211,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 212,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 213,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 214,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 215,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 216,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 217,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 218,
+      "column": "nom_region",
+      "code": "REGION_INVALIDE",
+      "message": "Région invalide: l-oriental"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 20,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: chefchaouen"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 30,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: fahs-anjra"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 47,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: m-diq-fnideq"
+    },
+    {
+      "severity": "error",
+      "sheet": "10_RSU",
+      "section": "Nouvelles inscriptions RSU",
+      "row": 77,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    },
+    {
+      "severity": "error",
+      "sheet": "20_ASD",
+      "section": "Flux entrants/sortants ASD",
+      "row": 74,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    },
+    {
+      "severity": "error",
+      "sheet": "30_AMO_Tadamon",
+      "section": "Flux entrants/sortants AMO Tadamon",
+      "row": 73,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 73,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 155,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    },
+    {
+      "severity": "error",
+      "sheet": "40_FMS",
+      "section": "Ménages bloqués",
+      "row": 237,
+      "column": "nom_province",
+      "code": "PROVINCE_INVALIDE",
+      "message": "Province invalide: taroudannt"
+    }
+  ]
+}

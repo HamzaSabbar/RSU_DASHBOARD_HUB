@@ -82,7 +82,7 @@ def make_report_workbook(
                 id_chargement,
                 "1.0",
                 to_excel(date(2026, 4, 24)),
-                "2026-04-01",
+                "2026-03-01",
                 "2026-04-30",
                 "2026-04-20",
                 "2026-04-20T08:30:00",
@@ -122,7 +122,7 @@ def make_report_workbook(
     for type_code, values in {
         "code_registre": ["RNP", "RSU"],
         "type_unite": ["MENAGES", "PERSONNES"],
-        "mode_source": ["SAISIE", "DIFF_SNAPSHOT_CUMULE"],
+        "mode_source": ["SAISIE", "DIFF_SNAPSHOT_CUMULE", "FLUX_PERIODE"],
         "code_langue": ["fr"],
         "methode_tendance": ["REGRESSION_LINEAIRE", "MOYENNE_MOBILE", "AUCUNE"],
         "code_type_famille": ["T1", "T2"],
@@ -174,6 +174,7 @@ def make_report_workbook(
             "mois_evenement",
             "code_region",
             "nom_province",
+            "code_registre",
             "type_unite",
             "nb_nouvelles_inscriptions",
             "mode_source",
@@ -181,10 +182,10 @@ def make_report_workbook(
             "commentaires",
         ],
         [
-            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-10", "2026-03", "CAS", "CASABLANCA", "MENAGES", 100, "SAISIE", "RSU", ""],
-            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-11", "2026-03", "RSK", "KÉNITRA", "MENAGES", 80, "SAISIE", "RSU", ""],
-            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-10", "2026-04", "CAS", "CASABLANCA", "MENAGES", 150, "SAISIE", "RSU", ""],
-            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-11", "2026-04", "RSK", "KÉNITRA", "MENAGES", 130, "SAISIE", "RSU", ""],
+            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-10", "2026-03", "CAS", "CASABLANCA", "RNP", "PERSONNES", 100, "FLUX_PERIODE", "RNP", ""],
+            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-11", "2026-03", "RSK", "KÉNITRA", "RNP", "PERSONNES", 80, "FLUX_PERIODE", "RNP", ""],
+            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-10", "2026-04", "CAS", "CASABLANCA", "RNP", "PERSONNES", 150, "FLUX_PERIODE", "RNP", ""],
+            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-11", "2026-04", "RSK", "KÉNITRA", "RNP", "PERSONNES", 130, "FLUX_PERIODE", "RNP", ""],
         ],
         omit=set() if include_id_chargement else {"id_chargement"},
     )
@@ -193,6 +194,32 @@ def make_report_workbook(
         "Annotations",
         ["code_graphique", "mois_evenement", "libelle_annotation", "commentaires"],
         [["RSU", "2026-04", "Mois partiel selon extraction source.", ""]],
+    )
+
+    ws = wb.create_sheet("12_RSU_Nouvelles_Inscriptions")
+    _add_section(
+        ws,
+        "Nouvelles inscriptions RSU ménages",
+        [
+            "id_chargement",
+            "debut_periode",
+            "fin_periode",
+            "date_evenement",
+            "mois_evenement",
+            "code_region",
+            "nom_province",
+            "nb_nouveaux_menages_rsu",
+            "mode_source",
+            "systeme_source",
+            "commentaires",
+        ],
+        [
+            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-10", "2026-03", "CAS", "CASABLANCA", 50, "FLUX_PERIODE", "RSU", ""],
+            [id_chargement, "2026-03-01", "2026-03-31", "2026-03-11", "2026-03", "RSK", "KÉNITRA", 30, "FLUX_PERIODE", "RSU", ""],
+            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-10", "2026-04", "CAS", "CASABLANCA", 70, "FLUX_PERIODE", "RSU", ""],
+            [id_chargement, "2026-04-01", "2026-04-30", "2026-04-11", "2026-04", "RSK", "KÉNITRA", 40, "FLUX_PERIODE", "RSU", ""],
+        ],
+        omit=set() if include_id_chargement else {"id_chargement"},
     )
 
     _program_sheet(
@@ -233,6 +260,7 @@ def make_split_table_workbook(
     include_system_sheets: bool = True,
     include_rsu_annotations: bool = True,
     minimal_parameters: bool = False,
+    client_data_only: bool = False,
 ) -> bytes:
     parsed = parser.parse_workbook(make_report_workbook(include_id_chargement=False))
     assert parsed.validation.summary.errors == 0
@@ -244,19 +272,27 @@ def make_split_table_workbook(
 
     system_sheet_keys = {"regions", "provinces", "codes", "amount_rules"}
     minimal_parameter_headers = {
-        "version_fichier",
-        "date_rapport",
         "debut_periode",
         "fin_periode",
-        "date_reference_donnees",
-        "date_heure_extraction",
+    }
+    client_omitted_headers = {
+        "date_reference",
+        "date_evenement",
+        "mois_evenement",
+        "code_region",
+        "code_registre",
+        "code_perimetre_programme",
+        "mode_source",
         "systeme_source",
+        "commentaires",
     }
 
     for spec in parser.SECTION_SPECS:
         if not include_system_sheets and spec.key in system_sheet_keys:
             continue
         if not include_rsu_annotations and spec.key == "rsu_annotations":
+            continue
+        if client_data_only and spec.key in {"rsu_stock", "asd_stock", "amo_stock"}:
             continue
         if spec.key == "parameters":
             rows = [parsed.normalized["metadata"]]
@@ -271,11 +307,36 @@ def make_split_table_workbook(
             for column in spec.columns
             if column != "id_chargement"
             and (not minimal_parameters or spec.key != "parameters" or column in minimal_parameter_headers)
+            and (
+                not client_data_only
+                or spec.key == "parameters"
+                or column not in client_omitted_headers
+            )
+            and (not client_data_only or spec.key != "parameters" or column in minimal_parameter_headers)
+            and (not client_data_only or spec.key != "rsu_annotations")
         ]
         ws = wb.create_sheet(sheet_name)
-        ws.append(headers)
+        client_headers = []
+        for header in headers:
+            client_header = header
+            if client_data_only:
+                client_header = {
+                    "code_type_famille": "type_famille",
+                    "code_niveau_risque": "niveau_risque",
+                    "code_motif_blocage": "motif_blocage",
+                }.get(header, header)
+                if spec.key == "rsu_household_registrations" and header == "nb_nouvelles_inscriptions":
+                    client_header = "nb_nouveaux_menages_rsu"
+            client_headers.append(client_header)
+        ws.append(client_headers)
         for row in rows:
-            ws.append([row.get(header) for header in headers])
+            values = []
+            for header in headers:
+                value = row.get(header)
+                if client_data_only and header in {"nom_region", "nom_province"} and value:
+                    value = str(value).lower()
+                values.append(value)
+            ws.append(values)
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -420,6 +481,10 @@ def _fms_sheet(
         [
             "id_chargement",
             "date_reference",
+            "debut_periode",
+            "fin_periode",
+            "date_evenement",
+            "mois_evenement",
             "code_type_famille",
             "code_niveau_risque",
             "code_perimetre_programme",
@@ -434,8 +499,8 @@ def _fms_sheet(
             "commentaires",
         ],
         [
-            [id_chargement, "2026-04-20", "T1", "ELEVE", "ASD", "CAS", "CASABLANCA", 100, 80, 20, 50, 20, "FMS", ""],
-            [id_chargement, "2026-04-20", "T2", "MOYEN", "AMO_TADAMON", "RSK", "KÉNITRA", 50, 50, 5, 40, 0, "FMS", ""],
+            [id_chargement, "2026-04-20", "2026-04-01", "2026-04-30", "2026-04-20", "2026-04", "T1", "ELEVE", "ASD", "CAS", "CASABLANCA", 100, 80, 20, 50, 20, "FMS", ""],
+            [id_chargement, "2026-04-20", "2026-04-01", "2026-04-30", "2026-04-20", "2026-04", "T2", "MOYEN", "AMO_TADAMON", "RSK", "KÉNITRA", 50, 50, 5, 40, 0, "FMS", ""],
         ],
         omit=set() if include_id_chargement else {"id_chargement"},
     )
@@ -445,6 +510,10 @@ def _fms_sheet(
         [
             "id_chargement",
             "date_reference",
+            "debut_periode",
+            "fin_periode",
+            "date_evenement",
+            "mois_evenement",
             "code_motif_blocage",
             "code_type_famille",
             "code_region",
@@ -455,9 +524,9 @@ def _fms_sheet(
             "commentaires",
         ],
         [
-            [id_chargement, "2026-04-20", "FMS", "T1", "CAS", "CASABLANCA", 10, 30, "FMS", ""],
-            [id_chargement, "2026-04-20", "INDIV", "T1", "CAS", "CASABLANCA", 3, 9, "FMS", ""],
-            [id_chargement, "2026-04-20", "MULTI", "T2", "RSK", "KÉNITRA", 5, 15, "FMS", ""],
+            [id_chargement, "2026-04-20", "2026-04-01", "2026-04-30", "2026-04-20", "2026-04", "FMS", "T1", "CAS", "CASABLANCA", 10, 30, "FMS", ""],
+            [id_chargement, "2026-04-20", "2026-04-01", "2026-04-30", "2026-04-20", "2026-04", "INDIV", "T1", "CAS", "CASABLANCA", 3, 9, "FMS", ""],
+            [id_chargement, "2026-04-20", "2026-04-01", "2026-04-30", "2026-04-20", "2026-04", "MULTI", "T2", "RSK", "KÉNITRA", 5, 15, "FMS", ""],
         ],
         omit=set() if include_id_chargement else {"id_chargement"},
     )
@@ -516,15 +585,23 @@ def _move_normalized_to_may(normalized: dict[str, Any]) -> dict[str, Any]:
     for key in ("rsu_stock", "asd_stock", "amo_stock", "fms_treatment", "fms_blocked"):
         for row in normalized[key]:
             row["date_reference"] = "2026-05-20"
-    for key in (
+    period_fact_keys = (
         "rsu_new_registrations",
+        "rsu_household_registrations",
         "asd_flow",
         "amo_flow",
         "asd_rescoring",
         "amo_rescoring",
         "asd_fraud",
         "amo_fraud",
-    ):
+        "fms_treatment",
+        "fms_blocked",
+    )
+    for key in period_fact_keys:
+        normalized[key] = [
+            row for row in normalized[key] if row.get("mois_evenement") in {None, "2026-04"}
+        ]
+    for key in period_fact_keys:
         for row in normalized[key]:
             row["debut_periode"] = "2026-05-01"
             row["fin_periode"] = "2026-05-31"
@@ -583,7 +660,8 @@ def test_successful_workbook_validation_and_dashboard() -> None:
         validation=parsed.validation,
     )
     assert dashboard["meta"]["idChargement"] == "LOAD-001"
-    assert dashboard["cards"]["inscriptions"]["rnpPersonnesTotal"]["raw"] == 12_000_000
+    assert dashboard["cards"]["inscriptions"]["rnpPersonnesTotal"]["raw"] == 460
+    assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 190
     assert dashboard["cards"]["traitementFms"]["demandesTraitees"]["raw"] == 130
     assert dashboard["cards"]["radiationFraude"]["savingAnnualRaw"] == 69_600
     assert dashboard["cards"]["rescoring"]["savingAnnualRaw"] == 19_200
@@ -618,12 +696,114 @@ def test_client_fact_workbook_without_system_reference_sheets_is_supported() -> 
         job_id="job-test",
     )
     assert parsed.validation.summary.errors == 0
-    assert parsed.normalized["regions"] == []
-    assert parsed.normalized["provinces"] == []
+    assert parsed.normalized["regions"][0]["code_region"] == "CAS"
+    assert parsed.normalized["provinces"][0]["nom_province"] == "AIN CHOCK"
     assert parsed.normalized["codes"] == []
     assert parsed.normalized["amount_rules"] == []
     assert parsed.normalized["metadata"]["code_langue"] == "fr"
     assert parsed.normalized["metadata"]["mois_reporting_courant"] == "2026-04"
+
+
+def test_client_data_only_workbook_derives_dates_and_region_codes() -> None:
+    parsed = parser.parse_workbook(
+        make_split_table_workbook(
+            include_system_sheets=False,
+            include_rsu_annotations=False,
+            minimal_parameters=True,
+            client_data_only=True,
+        ),
+        job_id="job-test",
+    )
+    assert parsed.validation.summary.errors == 0
+    row = parsed.normalized["rsu_new_registrations"][0]
+    assert row["debut_periode"] == "2026-03-01"
+    assert row["date_evenement"] == row["fin_periode"] == "2026-03-31"
+    assert row["mois_evenement"] == "2026-03"
+    assert row["code_region"] == "CAS"
+    assert row["nom_region"] == "Casablanca-Settat"
+    assert row["nom_province"] == "CASABLANCA"
+    fms_row = parsed.normalized["fms_treatment"][0]
+    assert fms_row["code_type_famille"] == "T1"
+    assert fms_row["code_niveau_risque"] == "ELEVE"
+    assert fms_row["code_perimetre_programme"] is None
+    blocked_row = parsed.normalized["fms_blocked"][0]
+    assert blocked_row["code_motif_blocage"] == "FMS"
+    assert blocked_row["code_type_famille"] == "T1"
+
+
+def test_client_data_only_workbook_derives_rnp_rsu_units() -> None:
+    workbook = load_workbook(
+        io.BytesIO(
+            make_split_table_workbook(
+                include_system_sheets=False,
+                include_rsu_annotations=False,
+                minimal_parameters=True,
+                client_data_only=True,
+            )
+        )
+    )
+    for sheet_name in ("11_RNP_Nouvelles_Inscriptions", "12_RSU_Nouvelles_Inscriptions"):
+        worksheet = workbook[sheet_name]
+        headers = [cell.value for cell in worksheet[1]]
+        unit_column = headers.index("type_unite") + 1
+        worksheet.delete_cols(unit_column)
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    parsed = parser.parse_workbook(buffer.getvalue(), job_id="job-test")
+
+    assert parsed.validation.summary.errors == 0
+    rnp_row = parsed.normalized["rsu_new_registrations"][0]
+    rsu_row = parsed.normalized["rsu_household_registrations"][0]
+    assert rnp_row["code_registre"] == "RNP"
+    assert rnp_row["type_unite"] == "PERSONNES"
+    assert rsu_row["code_registre"] == "RSU"
+    assert rsu_row["type_unite"] == "MENAGES"
+
+
+def test_client_data_only_workbook_without_stock_sheets_is_supported() -> None:
+    workbook = load_workbook(
+        io.BytesIO(
+            make_split_table_workbook(
+                include_system_sheets=False,
+                include_rsu_annotations=False,
+                minimal_parameters=True,
+                client_data_only=True,
+            )
+        )
+    )
+    for sheet_name in ("10_RSU_Stock", "20_ASD_Stock", "30_AMO_Tadamon_Stock"):
+        if sheet_name in workbook.sheetnames:
+            del workbook[sheet_name]
+    for sheet_name in ("21_ASD_Flux", "31_AMO_Tadamon_Flux"):
+        worksheet = workbook[sheet_name]
+        headers = [cell.value for cell in worksheet[1]]
+        for column in (
+            "montant_mensuel_sortants_dh",
+            "montant_mensuel_entrants_dh",
+            "nb_sortants_personnes",
+            "nb_entrants_personnes",
+        ):
+            worksheet.delete_cols(headers.index(column) + 1)
+            headers.remove(column)
+    worksheet = workbook["41_FMS_Menages_Bloques"]
+    headers = [cell.value for cell in worksheet[1]]
+    worksheet.delete_cols(headers.index("nb_personnes_bloquees") + 1)
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    parsed = parser.parse_workbook(buffer.getvalue(), job_id="job-test")
+
+    assert parsed.validation.summary.errors == 0
+    dashboard = calculations.build_dashboard(
+        parsed.normalized,
+        job_id="job-test",
+        validation=parsed.validation,
+    )
+    assert dashboard["cards"]["inscriptions"]["rnpPersonnesTotal"]["raw"] == 460
+    assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 190
+    assert dashboard["cards"]["programmesSociaux"]["asdMenagesActifs"]["raw"] == 65
+    assert dashboard["cards"]["programmesSociaux"]["amoMenagesActifs"]["raw"] == 38
 
 
 def test_missing_sheet_validation_message_is_french() -> None:
@@ -632,8 +812,8 @@ def test_missing_sheet_validation_message_is_french() -> None:
     assert any(
         message.message
         == (
-            "Feuille ou section obligatoire manquante: Stock RNP/RSU "
-            "(10_RSU_Stock ou 10_RSU)"
+            "Feuille ou section obligatoire manquante: Nouvelles inscriptions RNP "
+            "(11_RNP_Nouvelles_Inscriptions ou 11_RSU_Nouvelles_Inscriptions ou 10_RSU)"
         )
         for message in parsed.validation.messages
     )
@@ -721,9 +901,9 @@ def test_asd_net_and_combined_regional_aggregation() -> None:
         row["codeRegion"]: row
         for row in dashboard["charts"]["fluxRegionauxAsdAmot"]["rows"]
     }
-    assert regions["CAS"]["entrantsRaw"] == 70
-    assert regions["CAS"]["sortantsRaw"] == 25
-    assert regions["RSK"]["entrantsRaw"] == 40
+    assert regions["CAS"]["entrantsRaw"] == 150
+    assert regions["CAS"]["sortantsRaw"] == 85
+    assert regions["RSK"]["entrantsRaw"] == 80
     assert dashboard["tables"]["topProvincesFlux"][0]["province"] == "CASABLANCA"
 
 
@@ -771,7 +951,7 @@ async def test_cumulative_fact_dashboard_filters_by_date_range() -> None:
             april_asd = next(
                 row for row in april["tables"]["asdEvolution"] if row["month"] == "2026-04"
             )
-            assert april["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 4_000_000
+            assert april["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 110
             assert april_asd["entrantsRaw"] == 80
             assert april_asd["sortantsRaw"] == 30
 
@@ -780,7 +960,7 @@ async def test_cumulative_fact_dashboard_filters_by_date_range() -> None:
                 start_date=date(2026, 4, 1),
                 end_date=date(2026, 5, 31),
             )
-            assert april_may["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 4_500_000
+            assert april_may["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 220
             rsu_series = april_may["charts"]["rsuInscriptionsMensuelles"]["series"]
             assert [point["month"] for point in rsu_series] == ["2026-04", "2026-05"]
         finally:
@@ -840,7 +1020,7 @@ async def test_cumulative_fact_dashboard_does_not_use_future_snapshot() -> None:
                 end_date=date(2026, 4, 9),
             )
 
-            assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 0
+            assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] is None
             assert dashboard["charts"]["asdEntreesSorties"]["series"][0]["month"] == "2026-04"
         finally:
             await tx.rollback()
@@ -858,11 +1038,7 @@ async def test_duplicate_replace_supersedes_active_batch_without_deleting_histor
             assert replacement.validation.summary.errors == 0
 
             original_record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-REPLACE")
-            replacement_record = _job_record(
-                str(uuid.uuid4()),
-                id_chargement="LOAD-REPLACE",
-                replace=True,
-            )
+            replacement_record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-REPLACE")
             await _add_job_row(session, original_record)
             await _add_job_row(session, replacement_record)
             old_batch = await facts.ingest_report_batch(
@@ -873,7 +1049,7 @@ async def test_duplicate_replace_supersedes_active_batch_without_deleting_histor
             new_batch = await facts.ingest_report_batch(
                 session,
                 record=replacement_record,
-                normalized=_move_normalized_to_may(replacement.normalized),
+                normalized=replacement.normalized,
             )
 
             rows = list(
@@ -891,10 +1067,43 @@ async def test_duplicate_replace_supersedes_active_batch_without_deleting_histor
 
             dashboard = await facts.build_dashboard_for_range(
                 session,
-                start_date=date(2026, 5, 1),
-                end_date=date(2026, 5, 31),
+                start_date=date(2026, 4, 1),
+                end_date=date(2026, 4, 30),
             )
-            assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 4_500_000
+            assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 110
+        finally:
+            await tx.rollback()
+            await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_overlapping_period_upload_is_rejected() -> None:
+    async with SessionLocal() as session:
+        tx = await session.begin()
+        try:
+            original = parser.parse_workbook(make_report_workbook(id_chargement="LOAD-OVERLAP-1"))
+            overlap = parser.parse_workbook(make_report_workbook(id_chargement="LOAD-OVERLAP-2"))
+            assert original.validation.summary.errors == 0
+            assert overlap.validation.summary.errors == 0
+            overlap.normalized["metadata"]["debut_periode"] = "2026-04-15"
+            overlap.normalized["metadata"]["fin_periode"] = "2026-05-15"
+
+            original_record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-OVERLAP-1")
+            overlap_record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-OVERLAP-2")
+            await _add_job_row(session, original_record)
+            await _add_job_row(session, overlap_record)
+            await facts.ingest_report_batch(
+                session,
+                record=original_record,
+                normalized=original.normalized,
+            )
+
+            with pytest.raises(ValueError, match="chevauchante"):
+                await facts.ingest_report_batch(
+                    session,
+                    record=overlap_record,
+                    normalized=overlap.normalized,
+                )
         finally:
             await tx.rollback()
             await engine.dispose()

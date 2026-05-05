@@ -32,6 +32,7 @@ SYSTEM_CODE_INDEX: dict[str, dict[str, str]] = {
     "mode_source": {
         "saisie": "SAISIE",
         "diff_snapshot_cumule": "DIFF_SNAPSHOT_CUMULE",
+        "flux_periode": "FLUX_PERIODE",
     },
     "methode_tendance": {
         "regression_lineaire": "REGRESSION_LINEAIRE",
@@ -54,6 +55,118 @@ SYSTEM_MANAGED_OPEN_CODE_FIELDS = {
     "code_type_famille",
     "code_niveau_risque",
     "code_motif_blocage",
+}
+
+SYSTEM_REGION_CATALOG: tuple[tuple[str, str], ...] = (
+    ("CAS", "Casablanca-Settat"),
+    ("MKS", "Marrakech-Safi"),
+    ("RSK", "Rabat-Salé-Kénitra"),
+    ("FM", "Fès-Meknès"),
+    ("TTA", "Tanger-Tétouan-Al Hoceïma"),
+    ("BMK", "Béni Mellal-Khénifra"),
+    ("SM", "Souss-Massa"),
+    ("ORI", "Oriental"),
+    ("DT", "Drâa-Tafilalet"),
+    ("GON", "Guelmim-Oued Noun"),
+    ("LSH", "Laâyoune-Sakia El Hamra"),
+    ("DOD", "Dakhla-Oued Ed-Dahab"),
+)
+
+SYSTEM_PROVINCE_CATALOG: tuple[tuple[str, str], ...] = (
+    ("CAS", "AIN CHOCK"),
+    ("CAS", "AIN SEBAA HAY MOHAMMADI"),
+    ("CAS", "AL FIDA MERS SULTAN"),
+    ("CAS", "BEN M'SICK"),
+    ("CAS", "BENSLIMANE"),
+    ("CAS", "BERRECHID"),
+    ("CAS", "CASABLANCA"),
+    ("CAS", "CASABLANCA ANFA"),
+    ("CAS", "EL JADIDA"),
+    ("CAS", "HAY HASSANI"),
+    ("CAS", "MEDIOUNA"),
+    ("CAS", "MOHAMMADIA"),
+    ("CAS", "MOULAY RACHID"),
+    ("CAS", "NOUACEUR"),
+    ("CAS", "SETTAT"),
+    ("CAS", "SIDI BENNOUR"),
+    ("CAS", "SIDI BERNOUSSI"),
+    ("MKS", "AL HAOUZ"),
+    ("MKS", "CHICHAOUA"),
+    ("MKS", "EL KELAA DES SRAGHNA"),
+    ("MKS", "ESSAOUIRA"),
+    ("MKS", "MARRAKECH"),
+    ("MKS", "REHAMNA"),
+    ("MKS", "SAFI"),
+    ("MKS", "YOUSSOUFIA"),
+    ("RSK", "KÉNITRA"),
+    ("RSK", "KHÉMISSET"),
+    ("RSK", "RABAT"),
+    ("RSK", "SALE"),
+    ("RSK", "SIDI KACEM"),
+    ("RSK", "SIDI SLIMANE"),
+    ("RSK", "SKHIRATE-TEMARA"),
+    ("FM", "BOULEMANE"),
+    ("FM", "EL HAJEB"),
+    ("FM", "FES"),
+    ("FM", "IFRANE"),
+    ("FM", "MEKNES"),
+    ("FM", "MOULAY YACOUB"),
+    ("FM", "SEFROU"),
+    ("FM", "TAOUNATE"),
+    ("FM", "TAZA"),
+    ("TTA", "AL HOCEIMA"),
+    ("TTA", "CHEFCHAOUNE"),
+    ("TTA", "FAHS-ANJARA"),
+    ("TTA", "LARACHE"),
+    ("TTA", "M'DIQ - FNIDQ"),
+    ("TTA", "OUEZZANE"),
+    ("TTA", "TANGER-ASSILAH"),
+    ("TTA", "TÉTOUAN"),
+    ("BMK", "AZILAL"),
+    ("BMK", "BÉNI MELLAL"),
+    ("BMK", "FQUIH BEN SALAH"),
+    ("BMK", "KHENIFRA"),
+    ("BMK", "KHOURIBGA"),
+    ("SM", "AGADIR IDA OUTANANE"),
+    ("SM", "CHTOUKA-AIT BAHA"),
+    ("SM", "INEZGANE-AIT MELLOUL"),
+    ("SM", "TAROUDANT"),
+    ("SM", "TATA"),
+    ("SM", "TIZNIT"),
+    ("ORI", "BERKANE"),
+    ("ORI", "DRIOUCH"),
+    ("ORI", "FIGUIG"),
+    ("ORI", "GUERCIF"),
+    ("ORI", "JERADA"),
+    ("ORI", "NADOR"),
+    ("ORI", "OUJDA-ANGAD"),
+    ("ORI", "TAOURIRT"),
+    ("DT", "ERRACHIDIA"),
+    ("DT", "MIDELT"),
+    ("DT", "OUARZAZATE"),
+    ("DT", "TINGHIR"),
+    ("DT", "ZAGORA"),
+    ("GON", "ASSA-ZAG"),
+    ("GON", "GUELMIM"),
+    ("GON", "SIDI IFNI"),
+    ("GON", "TAN-TAN"),
+    ("LSH", "BOUJDOUR"),
+    ("LSH", "ES-SEMARA"),
+    ("LSH", "LAAYOUNE"),
+    ("LSH", "TARFAYA"),
+    ("DOD", "AOUSSERD"),
+    ("DOD", "OUED ED DAHAB"),
+)
+
+SYSTEM_REGION_ALIASES: dict[str, str] = {
+    "l_oriental": "ORI",
+}
+
+SYSTEM_PROVINCE_ALIASES: dict[str, str] = {
+    "chefchaouen": "CHEFCHAOUNE",
+    "fahs_anjra": "FAHS-ANJARA",
+    "m_diq_fnideq": "M'DIQ - FNIDQ",
+    "taroudannt": "TAROUDANT",
 }
 
 
@@ -106,6 +219,11 @@ PARAMETERS = SectionSpec(
     ),
     optional_columns=(
         "id_chargement",
+        "version_fichier",
+        "date_rapport",
+        "date_reference_donnees",
+        "date_heure_extraction",
+        "systeme_source",
         "code_langue",
         "mois_reporting_courant",
         "indicateur_mois_partiel",
@@ -171,30 +289,91 @@ RSU_STOCK = SectionSpec(
         "systeme_source",
         "commentaires",
     ),
-    optional_columns=("id_chargement",),
+    optional_columns=(
+        "id_chargement",
+        "date_reference",
+        "type_unite",
+        "systeme_source",
+        "commentaires",
+    ),
     sheet_aliases=("10_RSU_Stock",),
+    required=False,
 )
 
 RSU_FLOW = SectionSpec(
     sheet="10_RSU",
     key="rsu_new_registrations",
-    label="Nouvelles inscriptions RSU",
+    label="Nouvelles inscriptions RNP",
     columns=(
         "id_chargement",
         "debut_periode",
         "fin_periode",
         "date_evenement",
         "mois_evenement",
+        "nom_region",
         "code_region",
         "nom_province",
+        "code_registre",
         "type_unite",
         "nb_nouvelles_inscriptions",
         "mode_source",
         "systeme_source",
         "commentaires",
     ),
-    optional_columns=("id_chargement",),
-    sheet_aliases=("11_RSU_Nouvelles_Inscriptions",),
+    optional_columns=(
+        "id_chargement",
+        "date_evenement",
+        "mois_evenement",
+        "nom_region",
+        "code_region",
+        "code_registre",
+        "type_unite",
+        "mode_source",
+        "systeme_source",
+        "commentaires",
+    ),
+    sheet_aliases=("11_RNP_Nouvelles_Inscriptions", "11_RSU_Nouvelles_Inscriptions"),
+)
+
+RSU_HOUSEHOLD_FLOW = SectionSpec(
+    sheet="12_RSU_Nouvelles_Inscriptions",
+    key="rsu_household_registrations",
+    label="Nouvelles inscriptions RSU ménages",
+    columns=(
+        "id_chargement",
+        "debut_periode",
+        "fin_periode",
+        "date_evenement",
+        "mois_evenement",
+        "nom_region",
+        "code_region",
+        "nom_province",
+        "code_registre",
+        "type_unite",
+        "nb_nouvelles_inscriptions",
+        "mode_source",
+        "systeme_source",
+        "commentaires",
+    ),
+    aliases={
+        "nb_nouvelles_inscriptions": (
+            "nb_nouveaux_menages_rsu",
+            "nb_nouvelles_inscriptions_rsu",
+            "nb_menages_rsu",
+        ),
+    },
+    optional_columns=(
+        "id_chargement",
+        "date_evenement",
+        "mois_evenement",
+        "nom_region",
+        "code_region",
+        "code_registre",
+        "type_unite",
+        "mode_source",
+        "systeme_source",
+        "commentaires",
+    ),
 )
 
 RSU_ANNOTATIONS = SectionSpec(
@@ -220,6 +399,7 @@ PROGRAM_FLOW_COLUMNS = (
     "fin_periode",
     "date_evenement",
     "mois_evenement",
+    "nom_region",
     "code_region",
     "nom_province",
     "nb_entrants_menages",
@@ -237,6 +417,7 @@ RESCORING_COLUMNS = (
     "fin_periode",
     "date_evenement",
     "mois_evenement",
+    "nom_region",
     "code_region",
     "nom_province",
     "nb_sortants_menages",
@@ -252,6 +433,7 @@ FRAUD_COLUMNS = (
     "fin_periode",
     "date_evenement",
     "mois_evenement",
+    "nom_region",
     "code_region",
     "nom_province",
     "radiated_hh_count",
@@ -264,21 +446,43 @@ FRAUD_ALIASES: dict[str, tuple[str, ...]] = {
     "radiated_hh_count": ("nb_menages_radies",),
     "radiated_persons": ("nb_personnes_radiees",),
 }
+PROGRAM_STOCK_OPTIONAL_COLUMNS = (
+    "id_chargement",
+    "date_reference",
+    "systeme_source",
+    "commentaires",
+)
+PROGRAM_EVENT_OPTIONAL_COLUMNS = (
+    "id_chargement",
+    "date_evenement",
+    "mois_evenement",
+    "nom_region",
+    "code_region",
+    "systeme_source",
+    "commentaires",
+)
+PROGRAM_FLOW_OPTIONAL_COLUMNS = PROGRAM_EVENT_OPTIONAL_COLUMNS + (
+    "nb_entrants_personnes",
+    "nb_sortants_personnes",
+    "montant_mensuel_entrants_dh",
+    "montant_mensuel_sortants_dh",
+)
 
 ASD_STOCK = SectionSpec(
     "20_ASD",
     "asd_stock",
     "Stock ASD",
     PROGRAM_STOCK_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_STOCK_OPTIONAL_COLUMNS,
     sheet_aliases=("20_ASD_Stock",),
+    required=False,
 )
 ASD_FLOW = SectionSpec(
     "20_ASD",
     "asd_flow",
     "Flux entrants/sortants ASD",
     PROGRAM_FLOW_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_FLOW_OPTIONAL_COLUMNS,
     sheet_aliases=("21_ASD_Flux",),
 )
 ASD_RESCORING = SectionSpec(
@@ -286,7 +490,7 @@ ASD_RESCORING = SectionSpec(
     "asd_rescoring",
     "Rescoring ASD",
     RESCORING_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
     sheet_aliases=("22_ASD_Rescoring",),
 )
 ASD_FRAUD = SectionSpec(
@@ -295,7 +499,7 @@ ASD_FRAUD = SectionSpec(
     "Radiation pour fraude ASD",
     FRAUD_COLUMNS,
     FRAUD_ALIASES,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
     sheet_aliases=("23_ASD_Fraude",),
 )
 
@@ -304,15 +508,16 @@ AMO_STOCK = SectionSpec(
     "amo_stock",
     "Stock AMO Tadamon",
     PROGRAM_STOCK_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_STOCK_OPTIONAL_COLUMNS,
     sheet_aliases=("30_AMO_Tadamon_Stock",),
+    required=False,
 )
 AMO_FLOW = SectionSpec(
     "30_AMO_Tadamon",
     "amo_flow",
     "Flux entrants/sortants AMO Tadamon",
     PROGRAM_FLOW_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_FLOW_OPTIONAL_COLUMNS,
     sheet_aliases=("31_AMO_Tadamon_Flux",),
 )
 AMO_RESCORING = SectionSpec(
@@ -320,7 +525,7 @@ AMO_RESCORING = SectionSpec(
     "amo_rescoring",
     "Rescoring AMO Tadamon",
     RESCORING_COLUMNS,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
     sheet_aliases=("32_AMO_Tadamon_Rescoring",),
 )
 AMO_FRAUD = SectionSpec(
@@ -329,7 +534,7 @@ AMO_FRAUD = SectionSpec(
     "Radiation pour fraude AMO Tadamon",
     FRAUD_COLUMNS,
     FRAUD_ALIASES,
-    optional_columns=("id_chargement",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
     sheet_aliases=("33_AMO_Tadamon_Fraude",),
 )
 
@@ -340,9 +545,14 @@ FMS_TREATMENT = SectionSpec(
     columns=(
         "id_chargement",
         "date_reference",
+        "debut_periode",
+        "fin_periode",
+        "date_evenement",
+        "mois_evenement",
         "code_type_famille",
         "code_niveau_risque",
         "code_perimetre_programme",
+        "nom_region",
         "code_region",
         "nom_province",
         "demandes_injectees",
@@ -353,7 +563,22 @@ FMS_TREATMENT = SectionSpec(
         "systeme_source",
         "commentaires",
     ),
-    optional_columns=("id_chargement",),
+    aliases={
+        "code_type_famille": ("type_famille", "categorie_famille", "population_famille"),
+        "code_niveau_risque": ("niveau_risque", "risque"),
+        "code_perimetre_programme": ("perimetre_programme", "programme"),
+    },
+    optional_columns=(
+        "id_chargement",
+        "date_reference",
+        "date_evenement",
+        "mois_evenement",
+        "code_perimetre_programme",
+        "nom_region",
+        "code_region",
+        "systeme_source",
+        "commentaires",
+    ),
     sheet_aliases=("40_FMS_Traitement",),
 )
 
@@ -364,8 +589,13 @@ FMS_BLOCKED = SectionSpec(
     columns=(
         "id_chargement",
         "date_reference",
+        "debut_periode",
+        "fin_periode",
+        "date_evenement",
+        "mois_evenement",
         "code_motif_blocage",
         "code_type_famille",
+        "nom_region",
         "code_region",
         "nom_province",
         "nb_menages_bloques",
@@ -373,7 +603,21 @@ FMS_BLOCKED = SectionSpec(
         "systeme_source",
         "commentaires",
     ),
-    optional_columns=("id_chargement",),
+    aliases={
+        "code_motif_blocage": ("motif_blocage", "raison_blocage"),
+        "code_type_famille": ("type_famille", "categorie_famille", "population_famille"),
+    },
+    optional_columns=(
+        "id_chargement",
+        "date_reference",
+        "date_evenement",
+        "mois_evenement",
+        "nom_region",
+        "code_region",
+        "nb_personnes_bloquees",
+        "systeme_source",
+        "commentaires",
+    ),
     sheet_aliases=("41_FMS_Menages_Bloques",),
 )
 
@@ -402,6 +646,7 @@ SECTION_SPECS = (
     CODES,
     RSU_STOCK,
     RSU_FLOW,
+    RSU_HOUSEHOLD_FLOW,
     RSU_ANNOTATIONS,
     ASD_STOCK,
     ASD_FLOW,
@@ -705,6 +950,7 @@ def _normalize(
         "codes": [],
         "rsu_stock": [],
         "rsu_new_registrations": [],
+        "rsu_household_registrations": [],
         "rsu_annotations": [],
         "asd_stock": [],
         "asd_flow": [],
@@ -744,6 +990,12 @@ def _normalize(
             normalized[key] = rows
 
     _apply_metadata_defaults(normalized["metadata"])
+    system_references_added = _apply_system_reference_defaults(normalized)
+    _derive_system_owned_fields(
+        normalized,
+        messages,
+        override_uploaded_region_codes=system_references_added,
+    )
     return normalized
 
 
@@ -779,6 +1031,12 @@ def _normalize_row(
 def _apply_metadata_defaults(metadata: dict[str, Any]) -> None:
     if not metadata:
         return
+    if _is_blank(metadata.get("date_rapport")):
+        metadata["date_rapport"] = metadata.get("fin_periode") or metadata.get("debut_periode")
+    if _is_blank(metadata.get("date_reference_donnees")):
+        metadata["date_reference_donnees"] = metadata.get("fin_periode") or metadata.get(
+            "date_rapport"
+        )
     for key, default in SYSTEM_METADATA_DEFAULTS.items():
         if _is_blank(metadata.get(key)):
             metadata[key] = default
@@ -790,6 +1048,178 @@ def _apply_metadata_defaults(metadata: dict[str, Any]) -> None:
         )
         if isinstance(basis, str) and len(basis) >= 7:
             metadata["mois_reporting_courant"] = basis[:7]
+
+
+def _apply_system_reference_defaults(normalized: dict[str, Any]) -> bool:
+    added = False
+    if not normalized.get("regions"):
+        normalized["regions"] = [
+            {
+                "_row": None,
+                "code_region": code_region,
+                "nom_region": nom_region,
+                "ordre_affichage": index,
+            }
+            for index, (code_region, nom_region) in enumerate(SYSTEM_REGION_CATALOG, start=1)
+        ]
+        added = True
+    if not normalized.get("provinces"):
+        normalized["provinces"] = [
+            {
+                "_row": None,
+                "code_region": code_region,
+                "nom_province": nom_province,
+                "ordre_affichage": None,
+            }
+            for code_region, nom_province in SYSTEM_PROVINCE_CATALOG
+        ]
+        added = True
+    return added
+
+
+def _derive_system_owned_fields(
+    normalized: dict[str, Any],
+    messages: list[ValidationMessage],
+    *,
+    override_uploaded_region_codes: bool,
+) -> None:
+    metadata = normalized.get("metadata", {})
+    reference_date = metadata.get("date_reference_donnees") or metadata.get("fin_periode")
+    source_system = metadata.get("systeme_source")
+
+    for key in ("rsu_stock", "asd_stock", "amo_stock", "fms_treatment", "fms_blocked"):
+        for row in normalized.get(key, []):
+            if _is_blank(row.get("date_reference")):
+                row["date_reference"] = reference_date
+            if key == "rsu_stock" and _is_blank(row.get("type_unite")):
+                register = str(row.get("code_registre") or "").upper()
+                if register == "RNP":
+                    row["type_unite"] = "PERSONNES"
+                elif register == "RSU":
+                    row["type_unite"] = "MENAGES"
+            if _is_blank(row.get("systeme_source")) and not _is_blank(source_system):
+                row["systeme_source"] = source_system
+
+    for key in (
+        "rsu_new_registrations",
+        "rsu_household_registrations",
+        "asd_flow",
+        "asd_rescoring",
+        "asd_fraud",
+        "amo_flow",
+        "amo_rescoring",
+        "amo_fraud",
+        "fms_treatment",
+        "fms_blocked",
+    ):
+        for row in normalized.get(key, []):
+            if _is_blank(row.get("debut_periode")):
+                row["debut_periode"] = metadata.get("debut_periode")
+            if _is_blank(row.get("fin_periode")):
+                row["fin_periode"] = metadata.get("fin_periode")
+            if _is_blank(row.get("date_evenement")):
+                row["date_evenement"] = row.get("fin_periode") or metadata.get("fin_periode")
+            if _is_blank(row.get("mois_evenement")):
+                basis = row.get("date_evenement") or row.get("fin_periode")
+                if isinstance(basis, str) and len(basis) >= 7:
+                    row["mois_evenement"] = basis[:7]
+            if key == "rsu_new_registrations" and _is_blank(row.get("mode_source")):
+                row["mode_source"] = "DIFF_SNAPSHOT_CUMULE"
+            if key == "rsu_new_registrations" and _is_blank(row.get("type_unite")):
+                row["type_unite"] = "PERSONNES"
+            if key == "rsu_new_registrations" and _is_blank(row.get("code_registre")):
+                row["code_registre"] = "RNP"
+            if key == "rsu_household_registrations":
+                if _is_blank(row.get("mode_source")):
+                    row["mode_source"] = "FLUX_PERIODE"
+                if _is_blank(row.get("type_unite")):
+                    row["type_unite"] = "MENAGES"
+                if _is_blank(row.get("code_registre")):
+                    row["code_registre"] = "RSU"
+            if _is_blank(row.get("systeme_source")) and not _is_blank(source_system):
+                row["systeme_source"] = source_system
+
+    specs = _data_section_specs()
+    regions_by_code = {str(row.get("code_region")): row for row in normalized.get("regions", [])}
+    regions_by_name = {
+        _normalize_key(row.get("nom_region")): row for row in normalized.get("regions", [])
+    }
+    for alias, code_region in SYSTEM_REGION_ALIASES.items():
+        region = regions_by_code.get(code_region)
+        if region is not None:
+            regions_by_name[alias] = region
+    provinces_by_name = {
+        _normalize_key(row.get("nom_province")): row
+        for row in normalized.get("provinces", [])
+        if not _is_blank(row.get("nom_province"))
+    }
+    for alias, canonical in SYSTEM_PROVINCE_ALIASES.items():
+        province = provinces_by_name.get(_normalize_key(canonical))
+        if province is not None:
+            provinces_by_name[alias] = province
+    for key, spec in specs.items():
+        if key in {"regions", "provinces", "codes", "amount_rules", "rsu_annotations"}:
+            continue
+        for row in normalized.get(key, []):
+            _derive_geography(
+                row,
+                spec,
+                regions_by_code,
+                regions_by_name,
+                provinces_by_name,
+                messages,
+                override_uploaded_region_codes=override_uploaded_region_codes,
+            )
+
+
+def _derive_geography(
+    row: dict[str, Any],
+    spec: SectionSpec,
+    regions_by_code: dict[str, dict[str, Any]],
+    regions_by_name: dict[str, dict[str, Any]],
+    provinces_by_name: dict[str, dict[str, Any]],
+    messages: list[ValidationMessage],
+    *,
+    override_uploaded_region_codes: bool,
+) -> None:
+    if "nom_province" not in row and "nom_region" not in row and "code_region" not in row:
+        return
+
+    region_from_name = None
+    if not _is_blank(row.get("nom_region")):
+        region_from_name = regions_by_name.get(_normalize_key(row.get("nom_region")))
+        if region_from_name is None:
+            messages.append(
+                ValidationMessage(
+                    severity="error",
+                    sheet=spec.sheet,
+                    section=spec.label,
+                    row=row.get("_row"),
+                    column="nom_region",
+                    code="REGION_INVALIDE",
+                    message=f"Région invalide: {row.get('nom_region')}",
+                )
+            )
+
+    province = None
+    if not _is_blank(row.get("nom_province")):
+        province = provinces_by_name.get(_normalize_key(row.get("nom_province")))
+        if province is not None:
+            row["nom_province"] = province.get("nom_province")
+
+    region = region_from_name
+    if region is None and province is not None:
+        region = regions_by_code.get(str(province.get("code_region")))
+    if region is None and not _is_blank(row.get("code_region")):
+        region = regions_by_code.get(str(row.get("code_region")))
+    if region is None:
+        return
+
+    original_code = row.get("code_region")
+    canonical_code = region.get("code_region")
+    if _is_blank(original_code) or override_uploaded_region_codes:
+        row["code_region"] = canonical_code
+    row["nom_region"] = region.get("nom_region")
 
 
 def _validate_references(normalized: dict[str, Any], messages: list[ValidationMessage]) -> None:
@@ -953,29 +1383,35 @@ def _validate_required_stock_combinations(
     normalized: dict[str, Any],
     messages: list[ValidationMessage],
 ) -> None:
-    _require_combinations(
-        normalized.get("rsu_stock", []),
-        RSU_STOCK,
-        {("RNP", "PERSONNES"), ("RSU", "MENAGES"), ("RSU", "PERSONNES")},
-        messages,
-        ("code_registre", "type_unite"),
-    )
-    _require_combinations(
-        normalized.get("asd_stock", []),
-        ASD_STOCK,
-        {("MENAGES",), ("PERSONNES",)},
-        messages,
-        ("type_unite",),
-        prefix="ASD/",
-    )
-    _require_combinations(
-        normalized.get("amo_stock", []),
-        AMO_STOCK,
-        {("MENAGES",), ("PERSONNES",)},
-        messages,
-        ("type_unite",),
-        prefix="AMO_TADAMON/",
-    )
+    rsu_stock = normalized.get("rsu_stock", [])
+    if rsu_stock:
+        _require_combinations(
+            rsu_stock,
+            RSU_STOCK,
+            {("RNP", "PERSONNES"), ("RSU", "MENAGES")},
+            messages,
+            ("code_registre", "type_unite"),
+        )
+    asd_stock = normalized.get("asd_stock", [])
+    if asd_stock:
+        _require_combinations(
+            asd_stock,
+            ASD_STOCK,
+            {("MENAGES",), ("PERSONNES",)},
+            messages,
+            ("type_unite",),
+            prefix="ASD/",
+        )
+    amo_stock = normalized.get("amo_stock", [])
+    if amo_stock:
+        _require_combinations(
+            amo_stock,
+            AMO_STOCK,
+            {("MENAGES",), ("PERSONNES",)},
+            messages,
+            ("type_unite",),
+            prefix="AMO_TADAMON/",
+        )
 
 
 def _require_combinations(
@@ -1198,6 +1634,8 @@ def _coerce_datetime(
     messages: list[ValidationMessage],
 ) -> str | None:
     if _is_blank(value):
+        if column in spec.optional_columns:
+            return None
         messages.append(_invalid_value(spec, row, column, f"Date invalide: {column}"))
         return None
     if isinstance(value, datetime):

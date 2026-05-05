@@ -208,7 +208,7 @@ export function ReportDashboardView({
     <div className="mx-auto max-w-[1180px] bg-[#EEF0F1] pb-4 text-[#1D2A22] shadow-sm">
       <header className="flex h-12 items-center justify-between bg-[#005E2D] px-5 text-white">
         <h1 className="text-base font-bold tracking-normal">
-          {d.meta.titreRapport ?? "Tableau de bord hebdomadaire de suivi RSU"}
+          {d.meta.titreRapport ?? "Tableau de bord cumulatif de suivi RSU"}
         </h1>
         <span className="text-xs font-medium">{referenceDate ? formatDate(referenceDate) : ""}</span>
       </header>
@@ -219,17 +219,17 @@ export function ReportDashboardView({
             <KpiTile metric={d.cards.inscriptions.rnpPersonnesTotal} sublabel="au RNP" />
             <KpiTile
               metric={d.cards.inscriptions.rsuMenagesTotal}
-              sublabel={`${d.cards.inscriptions.rsuPersonnesTotal.compactDisplay ?? d.cards.inscriptions.rsuPersonnesTotal.display ?? ""} personnes`}
+              sublabel={peopleSublabel(d.cards.inscriptions.rsuPersonnesTotal)}
             />
           </KpiBand>
           <KpiBand title={d.cards.programmesSociaux.title}>
             <KpiTile
               metric={d.cards.programmesSociaux.asdMenagesActifs}
-              sublabel={`${d.cards.programmesSociaux.asdPersonnesActives.compactDisplay ?? d.cards.programmesSociaux.asdPersonnesActives.display ?? ""} personnes`}
+              sublabel={peopleSublabel(d.cards.programmesSociaux.asdPersonnesActives)}
             />
             <KpiTile
               metric={d.cards.programmesSociaux.amoMenagesActifs}
-              sublabel={`${d.cards.programmesSociaux.amoPersonnesActives.compactDisplay ?? d.cards.programmesSociaux.amoPersonnesActives.display ?? ""} personnes`}
+              sublabel={peopleSublabel(d.cards.programmesSociaux.amoPersonnesActives)}
             />
           </KpiBand>
         </div>
@@ -367,6 +367,11 @@ function SectionLabel({ children }: { children: React.ReactNode }): React.ReactE
   );
 }
 
+function peopleSublabel(metric: Metric): string | undefined {
+  const value = metric.compactDisplay ?? metric.display;
+  return value ? `${value} personnes` : undefined;
+}
+
 function KpiTile({
   metric,
   sublabel,
@@ -438,7 +443,7 @@ function RsuChart({
           <YAxis tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
           <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="value" name="Inscrits RSU" fill={GREEN_SOFT} barSize={24} />
+          <Bar dataKey="value" name="Inscrits RNP" fill={GREEN_SOFT} barSize={24} />
           <Line
             type="monotone"
             dataKey="trend"

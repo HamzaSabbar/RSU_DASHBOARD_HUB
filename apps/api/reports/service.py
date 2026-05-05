@@ -74,35 +74,6 @@ async def create_report_job(
 
     client_id_chargement = parser.extract_id_chargement(content)
     repo = repository_for_session(session)
-    if client_id_chargement and not replace:
-        if settings.report_job_repository.lower() == "db" and await facts.active_batch_exists(
-            session, client_id_chargement
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "code": "DUPLICATE_ID_CHARGEMENT",
-                    "idChargement": client_id_chargement,
-                    "message": (
-                        "Un chargement avec cet id_chargement existe déjà. "
-                        "Confirmez le remplacement pour écraser la version active."
-                    ),
-                },
-            )
-        existing = await repo.find_latest_by_business_id(client_id_chargement)
-        if existing and existing.status in {"queued", "running", "succeeded"}:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "code": "DUPLICATE_ID_CHARGEMENT",
-                    "idChargement": client_id_chargement,
-                    "message": (
-                        "Un chargement avec cet id_chargement existe déjà. "
-                        "Confirmez le remplacement pour écraser la version active."
-                    ),
-                },
-            )
-
     job_id = str(uuid.uuid4())
     id_chargement = client_id_chargement or f"JOB_{job_id}"
     raw_object_path = build_object_path("uploads", job_id, "input.xlsx")

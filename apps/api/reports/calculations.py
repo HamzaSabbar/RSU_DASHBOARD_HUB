@@ -35,7 +35,8 @@ def build_dashboard(
     current_month = _current_month(metadata, normalized)
     previous_month = _previous_month(current_month, _all_flow_months(normalized))
 
-    rsu_monthly = _rsu_monthly_values(normalized)
+    rsu_graph_unit = _rsu_graph_unit(normalized)
+    rsu_monthly = _rsu_monthly_values(normalized, graph_unit=rsu_graph_unit)
     rsu_evolution = _monthly_evolution(
         rsu_monthly,
         current_month=current_month,
@@ -49,14 +50,14 @@ def build_dashboard(
 
     asd_monthly = _program_monthly(normalized.get("asd_flow", []))
     asd_evolution = _program_comparison(asd_monthly, current_month, previous_month)
-    combined_region_flux = _combined_region_flux(normalized, current_month, regions)
-    top_flux = _top_province_flux(normalized, current_month)
+    combined_region_flux = _combined_region_flux(normalized, None, regions)
+    top_flux = _top_province_flux(normalized, None)
 
-    fms_rows = _latest_snapshot(normalized.get("fms_treatment", []), reference_date)
+    fms_rows = normalized.get("fms_treatment", [])
     fms_totals = _fms_totals(fms_rows)
     fms_matrix = _fms_matrix(fms_rows, code_labels)
 
-    blocked_rows = _latest_snapshot(normalized.get("fms_blocked", []), reference_date)
+    blocked_rows = normalized.get("fms_blocked", [])
     blocked_national = _blocked_by_reason(blocked_rows, code_labels)
     blocked_regional = _blocked_by_region(blocked_rows, regions)
     top_blocked = _top_blocked_provinces(blocked_rows)
@@ -69,7 +70,7 @@ def build_dashboard(
         "meta": {
             "jobId": job_id,
             "idChargement": metadata.get("id_chargement"),
-            "titreRapport": "Tableau de bord hebdomadaire de suivi RSU",
+            "titreRapport": "Tableau de bord cumulatif de suivi RSU",
             "dateRapport": metadata.get("date_rapport"),
             "dateReferenceDonnees": reference_date,
             "locale": "fr-MA",
@@ -97,24 +98,24 @@ def build_dashboard(
             "inscriptions": {
                 "title": "Chiffres clés des inscriptions",
                 "rnpPersonnesTotal": _metric(
-                    "RNP - personnes",
-                    _latest_stock_value(
-                        normalized.get("rsu_stock", []),
-                        "total_cumule",
-                        reference_date,
+                    "RNP - personnes cumulées",
+                    _registration_total(
+                        normalized,
                         code_registre="RNP",
                         type_unite="PERSONNES",
+                        fallback_stock_field="total_cumule",
+                        reference_date=reference_date,
                     ),
                     color="green",
                 ),
                 "rsuMenagesTotal": _metric(
-                    "RSU - ménages",
-                    _latest_stock_value(
-                        normalized.get("rsu_stock", []),
-                        "total_cumule",
-                        reference_date,
+                    "RSU - ménages cumulés",
+                    _registration_total(
+                        normalized,
                         code_registre="RSU",
                         type_unite="MENAGES",
+                        fallback_stock_field="total_cumule",
+                        reference_date=reference_date,
                     ),
                     color="green",
                 ),
@@ -130,7 +131,7 @@ def build_dashboard(
                     color="green",
                 ),
                 "nouvellesInscriptionsMois": _metric(
-                    "Nouvelles inscriptions",
+                    "Nouvelles inscriptions RNP",
                     rsu_monthly.get(current_month, 0),
                     color="green",
                 ),
@@ -143,40 +144,40 @@ def build_dashboard(
             "programmesSociaux": {
                 "title": "Programmes sociaux",
                 "asdMenagesActifs": _metric(
-                    "ASD - ménages actifs",
-                    _latest_stock_value(
+                    "ASD - ménages net cumulés",
+                    _program_active_total(
+                        normalized.get("asd_flow", []),
                         normalized.get("asd_stock", []),
-                        "nb_actifs",
                         reference_date,
                         type_unite="MENAGES",
                     ),
                     color="green",
                 ),
                 "asdPersonnesActives": _metric(
-                    "ASD - personnes actives",
-                    _latest_stock_value(
+                    "ASD - personnes net cumulées",
+                    _program_active_total(
+                        normalized.get("asd_flow", []),
                         normalized.get("asd_stock", []),
-                        "nb_actifs",
                         reference_date,
                         type_unite="PERSONNES",
                     ),
                     color="green",
                 ),
                 "amoMenagesActifs": _metric(
-                    "AMO Tadamon - ménages actifs",
-                    _latest_stock_value(
+                    "AMO Tadamon - ménages net cumulés",
+                    _program_active_total(
+                        normalized.get("amo_flow", []),
                         normalized.get("amo_stock", []),
-                        "nb_actifs",
                         reference_date,
                         type_unite="MENAGES",
                     ),
                     color="green",
                 ),
                 "amoPersonnesActives": _metric(
-                    "AMO Tadamon - personnes actives",
-                    _latest_stock_value(
+                    "AMO Tadamon - personnes net cumulées",
+                    _program_active_total(
+                        normalized.get("amo_flow", []),
                         normalized.get("amo_stock", []),
-                        "nb_actifs",
                         reference_date,
                         type_unite="PERSONNES",
                     ),
@@ -217,8 +218,8 @@ def build_dashboard(
         },
         "charts": {
             "rsuInscriptionsMensuelles": {
-                "title": "Dynamique des inscriptions au RSU",
-                "unit": metadata.get("type_unite_graphique_rsu") or "MENAGES",
+                "title": "Dynamique des inscriptions au RNP",
+                "unit": rsu_graph_unit,
                 "series": [
                     {
                         "month": point["month"],
@@ -294,7 +295,15 @@ def moving_average(values: Sequence[int | float], window: int = 3) -> list[float
     return out
 
 
-def _metric(label: str, raw: int | float, *, color: str = "gray") -> dict[str, Any]:
+def _metric(label: str, raw: int | float | None, *, color: str = "gray") -> dict[str, Any]:
+    if raw is None:
+        return {
+            "label": label,
+            "raw": None,
+            "display": None,
+            "compactDisplay": None,
+            "color": color,
+        }
     return {
         "label": label,
         "raw": raw,
@@ -345,12 +354,15 @@ def _all_flow_months(normalized: dict[str, Any]) -> list[str]:
     months: set[str] = set()
     for key in (
         "rsu_new_registrations",
+        "rsu_household_registrations",
         "asd_flow",
         "amo_flow",
         "asd_rescoring",
         "amo_rescoring",
         "asd_fraud",
         "amo_fraud",
+        "fms_treatment",
+        "fms_blocked",
     ):
         months.update(
             str(row["mois_evenement"])
@@ -376,11 +388,93 @@ def _previous_month(current_month: str, months: list[str]) -> str:
     return f"{year:04d}-{month:02d}"
 
 
-def _rsu_monthly_values(normalized: dict[str, Any]) -> dict[str, int]:
+def _registration_rows(normalized: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        *normalized.get("rsu_new_registrations", []),
+        *normalized.get("rsu_household_registrations", []),
+    ]
+
+
+def _registration_total(
+    normalized: dict[str, Any],
+    *,
+    code_registre: str,
+    type_unite: str,
+    fallback_stock_field: str,
+    reference_date: str | None,
+) -> int | None:
+    rows = [
+        row
+        for row in _registration_rows(normalized)
+        if str(row.get("code_registre") or "RNP").upper() == code_registre
+        and str(row.get("type_unite") or "").upper() == type_unite
+    ]
+    if rows:
+        return sum(int(row.get("nb_nouvelles_inscriptions") or 0) for row in rows)
+    return _latest_stock_value(
+        normalized.get("rsu_stock", []),
+        fallback_stock_field,
+        reference_date,
+        code_registre=code_registre,
+        type_unite=type_unite,
+    )
+
+
+def _program_active_total(
+    flow_rows: list[dict[str, Any]],
+    stock_rows: list[dict[str, Any]],
+    reference_date: str | None,
+    *,
+    type_unite: str,
+) -> int | None:
+    if flow_rows:
+        if type_unite == "PERSONNES":
+            entrants_field = "nb_entrants_personnes"
+            sortants_field = "nb_sortants_personnes"
+        else:
+            entrants_field = "nb_entrants_menages"
+            sortants_field = "nb_sortants_menages"
+        return sum(
+            int(row.get(entrants_field) or 0) - int(row.get(sortants_field) or 0)
+            for row in flow_rows
+        )
+    return _latest_stock_value(
+        stock_rows,
+        "nb_actifs",
+        reference_date,
+        type_unite=type_unite,
+    )
+
+
+def _rsu_graph_unit(normalized: dict[str, Any]) -> str:
     metadata = normalized.get("metadata", {})
-    graph_unit = str(metadata.get("type_unite_graphique_rsu") or "MENAGES").upper()
+    configured = str(metadata.get("type_unite_graphique_rsu") or "PERSONNES").upper()
+    flow_units = {
+        str(row.get("type_unite") or "").upper()
+        for row in _registration_rows(normalized)
+        if row.get("mois_evenement")
+        and str(row.get("code_registre") or "RNP").upper() == "RNP"
+    }
+    if configured in flow_units or not flow_units:
+        return configured
+    for fallback in ("PERSONNES", "MENAGES"):
+        if fallback in flow_units:
+            return fallback
+    return sorted(flow_units)[0]
+
+
+def _rsu_monthly_values(
+    normalized: dict[str, Any],
+    *,
+    graph_unit: str | None = None,
+) -> dict[str, int]:
+    if graph_unit is None:
+        graph_unit = _rsu_graph_unit(normalized)
+    graph_unit = graph_unit.upper()
     monthly: dict[str, int] = defaultdict(int)
-    for row in normalized.get("rsu_new_registrations", []):
+    for row in _registration_rows(normalized):
+        if str(row.get("code_registre") or "RNP").upper() != "RNP":
+            continue
         if str(row.get("type_unite") or "").upper() != graph_unit:
             continue
         month = row.get("mois_evenement")
@@ -392,7 +486,7 @@ def _rsu_monthly_values(normalized: dict[str, Any]) -> dict[str, int]:
     snapshots = [
         row
         for row in normalized.get("rsu_stock", [])
-        if str(row.get("code_registre") or "").upper() == "RSU"
+        if str(row.get("code_registre") or "").upper() == "RNP"
         and str(row.get("type_unite") or "").upper() == graph_unit
         and row.get("date_reference")
     ]
@@ -513,13 +607,13 @@ def _program_comparison(
 
 def _combined_region_flux(
     normalized: dict[str, Any],
-    month: str,
+    month: str | None,
     regions: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     totals: dict[str, dict[str, int]] = defaultdict(lambda: {"entrants": 0, "sortants": 0})
     for key in ("asd_flow", "amo_flow"):
         for row in normalized.get(key, []):
-            if month and row.get("mois_evenement") != month:
+            if month is not None and row.get("mois_evenement") != month:
                 continue
             code = str(row.get("code_region") or "")
             totals[code]["entrants"] += int(row.get("nb_entrants_menages") or 0)
@@ -555,11 +649,11 @@ def _region_flux_row(
     }
 
 
-def _top_province_flux(normalized: dict[str, Any], month: str) -> list[dict[str, Any]]:
+def _top_province_flux(normalized: dict[str, Any], month: str | None) -> list[dict[str, Any]]:
     totals: dict[str, dict[str, int]] = defaultdict(lambda: {"entrants": 0, "sortants": 0})
     for key in ("asd_flow", "amo_flow"):
         for row in normalized.get(key, []):
-            if month and row.get("mois_evenement") != month:
+            if month is not None and row.get("mois_evenement") != month:
                 continue
             province = str(row.get("nom_province") or "")
             if not province:
@@ -588,7 +682,7 @@ def _latest_stock_value(
     value_field: str,
     reference_date: str | None,
     **filters: str,
-) -> int:
+) -> int | None:
     candidates = [
         row
         for row in rows
@@ -596,7 +690,7 @@ def _latest_stock_value(
     ]
     latest = _latest_snapshot(candidates, reference_date)
     if not latest:
-        return 0
+        return None
     return int(latest[0].get(value_field) or 0)
 
 

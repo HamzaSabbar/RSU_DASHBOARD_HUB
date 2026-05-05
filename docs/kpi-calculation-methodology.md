@@ -10,7 +10,8 @@ Related input schema: `docs/report-excel-upload-schema.md`.
 
 The dashboard is built from the selected date range in the app.
 
-- Flow/event sections use rows where `date_evenement` is inside the selected range.
+- Flow/event sections use rows where internal `date_evenement` is inside the selected range.
+  For simplified client uploads, the app derives `date_evenement` from `fin_periode`.
 - Stock/snapshot sections use the latest available snapshot for `date_reference` in the selected range.
 - If no dashboard data exists for the selected range, the app returns “Aucune donnée disponible pour le moment”.
 
@@ -59,45 +60,47 @@ If the denominator is `0`, the percentage is blank.
 
 ## KPI Cards
 
-### RNP - personnes
+### RNP - personnes cumulées
 
-Source: `10_RSU` / `Stock RNP/RSU`
+Source: `11_RNP_Nouvelles_Inscriptions`
 
 Filter:
 
 ```text
 code_registre = RNP
 type_unite = PERSONNES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-RNP personnes = total_cumule
+RNP personnes cumulées = SUM(nb_nouvelles_inscriptions)
 ```
 
-### RSU - ménages
+### RSU - ménages cumulés
 
-Source: `10_RSU` / `Stock RNP/RSU`
+Source: `12_RSU_Nouvelles_Inscriptions`
 
 Filter:
 
 ```text
 code_registre = RSU
 type_unite = MENAGES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-RSU ménages = total_cumule
+RSU ménages cumulés = SUM(nb_nouvelles_inscriptions)
 ```
 
-### RSU - personnes
+### RSU - personnes couvertes
 
 Source: `10_RSU` / `Stock RNP/RSU`
+
+If this stock section is not supplied, the KPI is unavailable rather than `0`.
 
 Filter:
 
@@ -113,21 +116,24 @@ Formula:
 RSU personnes = total_cumule
 ```
 
-### Nouvelles inscriptions RSU
+This metric is optional context. The main RSU cumulative KPI is `RSU` / `MENAGES`
+because RSU is household/family-level in the client data model.
 
-Source: `10_RSU` / `Nouvelles inscriptions RSU`
+### Nouvelles inscriptions RNP
+
+Source: `11_RNP_Nouvelles_Inscriptions`
 
 Filter:
 
 ```text
-type_unite = metadata.type_unite_graphique_rsu
+type_unite = PERSONNES
 mois_evenement = mois_reporting_courant
 ```
 
-Default unit:
+Default unit if the column is omitted:
 
 ```text
-MENAGES
+PERSONNES
 ```
 
 Formula:
@@ -138,7 +144,7 @@ Nouvelles inscriptions = SUM(nb_nouvelles_inscriptions)
 
 ### Evolution vs mois précédent
 
-Source: monthly RSU new registrations.
+Source: monthly RNP new registrations.
 
 Formula:
 
@@ -151,70 +157,66 @@ If `inscriptions_mois_precedent = 0`, `delta_pct` is blank.
 
 ### ASD - ménages actifs
 
-Source: `20_ASD` / `Stock ASD`
+Source: `21_ASD_Flux`
 
 Filter:
 
 ```text
-type_unite = MENAGES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-ASD ménages actifs = nb_actifs
+ASD ménages actifs = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
 ```
 
 ### ASD - personnes actives
 
-Source: `20_ASD` / `Stock ASD`
+Source: `21_ASD_Flux`
 
 Filter:
 
 ```text
-type_unite = PERSONNES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-ASD personnes actives = nb_actifs
+ASD personnes actives = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)
 ```
 
 ### AMO Tadamon - ménages actifs
 
-Source: `30_AMO_Tadamon` / `Stock AMO Tadamon`
+Source: `31_AMO_Tadamon_Flux`
 
 Filter:
 
 ```text
-type_unite = MENAGES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-AMO Tadamon ménages actifs = nb_actifs
+AMO Tadamon ménages actifs = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
 ```
 
 ### AMO Tadamon - personnes actives
 
-Source: `30_AMO_Tadamon` / `Stock AMO Tadamon`
+Source: `31_AMO_Tadamon_Flux`
 
 Filter:
 
 ```text
-type_unite = PERSONNES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-AMO Tadamon personnes actives = nb_actifs
+AMO Tadamon personnes actives = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)
 ```
 
 ### Demandes injectées FMS
@@ -224,7 +226,7 @@ Source: `40_FMS` / `Traitement FMS`
 Filter:
 
 ```text
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
@@ -451,26 +453,21 @@ Economie budgétaire totale = Economie fraude + Economie rescoring
 
 ## Charts And Tables
 
-### Dynamique des inscriptions au RSU
+### Dynamique des inscriptions au RNP
 
-Source: `10_RSU` / `Nouvelles inscriptions RSU`
+Source: `11_RNP_Nouvelles_Inscriptions`
 
 Main monthly formula:
 
 ```text
-RSU monthly value =
+RNP monthly value =
   SUM(nb_nouvelles_inscriptions)
   grouped by mois_evenement
-  filtered by type_unite = metadata.type_unite_graphique_rsu
+  filtered by type_unite = PERSONNES
 ```
 
-If no `Nouvelles inscriptions RSU` rows are available, the dashboard estimates monthly values from RSU stock snapshots:
-
-```text
-monthly_value = current_month_total_cumule - previous_snapshot_total_cumule
-```
-
-Negative differences are floored at `0`.
+The legacy sheet name `11_RSU_Nouvelles_Inscriptions` remains accepted for
+older files, but new files should use the RNP sheet name.
 
 Monthly evolution table:
 
@@ -518,8 +515,8 @@ Source: `40_FMS` / `Traitement FMS`
 Grouped by:
 
 ```text
-code_type_famille
-code_niveau_risque
+type_famille, normalized internally as code_type_famille
+niveau_risque, normalized internally as code_niveau_risque
 ```
 
 Formulas:
@@ -542,7 +539,7 @@ Source: `40_FMS` / `Ménages bloqués`
 Grouped by:
 
 ```text
-code_motif_blocage
+motif_blocage, normalized internally as code_motif_blocage
 ```
 
 Formulas:
@@ -650,7 +647,6 @@ The table shows the top 5 provinces sorted by `menages_bloques` descending.
 
 Footnotes include:
 
-1. All labels from `10_RSU` / `Annotations RSU` where `libelle_annotation` is present.
+1. App-managed RSU annotation labels where `libelle_annotation` is present.
 2. If ASD rescoring has `nb_menages_non_communiques > 0`, the dashboard adds an ASD non-communicated households note.
 3. If AMO Tadamon rescoring has `nb_menages_non_communiques > 0`, the dashboard adds an AMO Tadamon non-communicated households note.
-

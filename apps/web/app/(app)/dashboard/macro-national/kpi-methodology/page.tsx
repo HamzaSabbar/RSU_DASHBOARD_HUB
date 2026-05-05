@@ -32,11 +32,11 @@ type MethodologySection = {
 const scopeRules = [
   {
     title: "Période sélectionnée",
-    body: "Les flux utilisent les lignes dont date_evenement est dans l'intervalle choisi. Les stocks utilisent le snapshot disponible dans cette même période.",
+    body: "Les flux utilisent une date_evenement interne dans l'intervalle choisi. Pour les fichiers client simplifiés, cette date est dérivée de fin_periode.",
   },
   {
-    title: "Date de référence",
-    body: "Pour les stocks, le dashboard prend la dernière ligne disponible avec date_reference <= date_reference_donnees.",
+    title: "Cumul chargé",
+    body: "Les KPI cumulés sont calculés en additionnant les faits actifs dans l'intervalle sélectionné. Les anciennes feuilles de stock restent lisibles uniquement pour compatibilité.",
   },
   {
     title: "Valeurs vides",
@@ -48,36 +48,36 @@ const kpiSections: MethodologySection[] = [
   {
     title: "Inscriptions et registre",
     description:
-      "Ces KPI mesurent la taille cumulée des registres et le rythme des nouvelles inscriptions RSU.",
+      "Ces KPI mesurent la taille cumulée des registres et le rythme des nouvelles inscriptions RNP.",
     items: [
       {
         name: "RNP - personnes",
         purpose:
-          "Afficher le nombre cumulé de personnes enregistrées dans le RNP à la date de référence.",
-        source: "10_RSU / Stock RNP/RSU",
+          "Afficher le cumul des personnes inscrites au RNP dans les données chargées.",
+        source: "11_RNP_Nouvelles_Inscriptions",
         calculation: [
           "Filtrer code_registre = RNP",
           "Filtrer type_unite = PERSONNES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = total_cumule",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_nouvelles_inscriptions)",
         ],
       },
       {
         name: "RSU - ménages",
         purpose:
-          "Afficher le nombre cumulé de ménages enregistrés dans le RSU à la date de référence.",
-        source: "10_RSU / Stock RNP/RSU",
+          "Afficher le cumul des ménages/familles inscrits au RSU dans les données chargées.",
+        source: "12_RSU_Nouvelles_Inscriptions",
         calculation: [
           "Filtrer code_registre = RSU",
           "Filtrer type_unite = MENAGES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = total_cumule",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_nouvelles_inscriptions)",
         ],
       },
       {
-        name: "RSU - personnes",
+        name: "RSU - personnes couvertes",
         purpose:
-          "Donner le volume de personnes couvertes par les ménages RSU affichés sur le dashboard.",
+          "Donner, si la source le fournit, le volume de personnes couvertes par les ménages RSU affichés sur le dashboard.",
         source: "10_RSU / Stock RNP/RSU",
         calculation: [
           "Filtrer code_registre = RSU",
@@ -87,22 +87,22 @@ const kpiSections: MethodologySection[] = [
         ],
       },
       {
-        name: "Nouvelles inscriptions RSU",
+        name: "Nouvelles inscriptions RNP",
         purpose:
-          "Suivre les nouvelles inscriptions du mois courant avec l'unité configurée pour le graphique RSU.",
-        source: "10_RSU / Nouvelles inscriptions RSU",
+          "Suivre les nouvelles inscriptions individuelles RNP du mois courant.",
+        source: "11_RNP_Nouvelles_Inscriptions",
         calculation: [
-          "Filtrer type_unite = type_unite_graphique_rsu",
+          "Utiliser type_unite = PERSONNES si la colonne est absente",
           "Filtrer mois_evenement = mois_reporting_courant",
           "KPI = SUM(nb_nouvelles_inscriptions)",
         ],
-        note: "L'unité par défaut est MENAGES si le fichier ne configure pas une autre unité.",
+        note: "Le nom de feuille legacy 11_RSU_Nouvelles_Inscriptions est encore accepté, mais les nouvelles données doivent être libellées RNP.",
       },
       {
         name: "Evolution vs mois précédent",
         purpose:
           "Comparer les nouvelles inscriptions du mois courant avec le mois précédent disponible.",
-        source: "10_RSU / Nouvelles inscriptions RSU",
+        source: "11_RNP_Nouvelles_Inscriptions",
         calculation: [
           "delta = inscriptions_mois_courant - inscriptions_mois_precedent",
           "delta_pct = delta / inscriptions_mois_precedent",
@@ -114,50 +114,46 @@ const kpiSections: MethodologySection[] = [
   {
     title: "Programmes sociaux",
     description:
-      "Ces KPI donnent le stock actif des bénéficiaires ASD et AMO Tadamon.",
+      "Ces KPI donnent le net cumulé des bénéficiaires ASD et AMO Tadamon dans la période chargée.",
     items: [
       {
         name: "ASD - ménages actifs",
         purpose:
           "Afficher le nombre de ménages actifs dans le programme ASD à la date de référence.",
-        source: "20_ASD / Stock ASD",
+        source: "21_ASD_Flux",
         calculation: [
-          "Filtrer type_unite = MENAGES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = nb_actifs",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)",
         ],
       },
       {
         name: "ASD - personnes actives",
         purpose:
           "Afficher le nombre de personnes couvertes par les ménages ASD actifs.",
-        source: "20_ASD / Stock ASD",
+        source: "21_ASD_Flux",
         calculation: [
-          "Filtrer type_unite = PERSONNES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = nb_actifs",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)",
         ],
       },
       {
         name: "AMO Tadamon - ménages actifs",
         purpose:
           "Afficher le nombre de ménages actifs dans le programme AMO Tadamon.",
-        source: "30_AMO_Tadamon / Stock AMO Tadamon",
+        source: "31_AMO_Tadamon_Flux",
         calculation: [
-          "Filtrer type_unite = MENAGES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = nb_actifs",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)",
         ],
       },
       {
         name: "AMO Tadamon - personnes actives",
         purpose:
           "Afficher le nombre de personnes couvertes par les ménages AMO Tadamon actifs.",
-        source: "30_AMO_Tadamon / Stock AMO Tadamon",
+        source: "31_AMO_Tadamon_Flux",
         calculation: [
-          "Filtrer type_unite = PERSONNES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = nb_actifs",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)",
         ],
       },
     ],
@@ -325,22 +321,22 @@ const visualSections: MethodologySection[] = [
       "Les graphiques utilisent les mêmes données que les KPI, puis les agrègent par mois, région, province ou famille de risque.",
     items: [
       {
-        name: "Dynamique des inscriptions au RSU",
+        name: "Dynamique des inscriptions au RNP",
         purpose:
-          "Visualiser l'évolution mensuelle des nouvelles inscriptions RSU.",
-        source: "10_RSU / Nouvelles inscriptions RSU",
+          "Visualiser l'évolution mensuelle des nouvelles inscriptions individuelles RNP.",
+        source: "11_RNP_Nouvelles_Inscriptions",
         calculation: [
           "Grouper par mois_evenement",
-          "Filtrer type_unite = type_unite_graphique_rsu",
+          "Utiliser type_unite = PERSONNES si la colonne est absente",
           "Valeur mensuelle = SUM(nb_nouvelles_inscriptions)",
         ],
-        note: "Si les flux ne sont pas fournis, le dashboard estime le mois par différence entre deux snapshots RSU et bloque les valeurs négatives à 0.",
+        note: "Le dashboard peut encore lire l'ancien nom de feuille 11_RSU_Nouvelles_Inscriptions pour compatibilité.",
       },
       {
-        name: "Ligne de tendance RSU",
+        name: "Ligne de tendance RNP",
         purpose:
-          "Donner une lecture rapide de l'orientation des inscriptions RSU.",
-        source: "Série mensuelle RSU",
+          "Donner une lecture rapide de l'orientation des inscriptions RNP.",
+        source: "Série mensuelle RNP",
         calculation: [
           "REGRESSION_LINEAIRE = régression sur les valeurs mensuelles",
           "MOYENNE_MOBILE = moyenne mobile sur 3 mois",
@@ -513,9 +509,9 @@ export default function KpiMethodologyPage(): React.ReactElement {
               Annotations et notes
             </h2>
             <p className="mt-2 text-sm leading-6 text-brand-muted">
-              Les annotations viennent de la section Annotations RSU. Le
-              dashboard ajoute aussi une note si le rescoring ASD ou AMO Tadamon
-              contient des ménages non communiqués.
+              Les annotations RSU sont gérées dans l&apos;application. Le dashboard
+              ajoute aussi une note si le rescoring ASD ou AMO Tadamon contient
+              des ménages non communiqués.
             </p>
           </div>
         </div>

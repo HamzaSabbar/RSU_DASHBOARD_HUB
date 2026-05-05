@@ -184,6 +184,7 @@ class ReportUploadBatch(Base):
     period_start: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     period_end: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     reference_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    systeme_source: Mapped[str] = mapped_column(String(255), nullable=False, default="system", index=True)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     raw_object_path: Mapped[str] = mapped_column(String(1024), nullable=False)
     normalized_object_path: Mapped[str] = mapped_column(String(1024), nullable=False)
@@ -206,8 +207,10 @@ class ReportUploadBatch(Base):
             name="report_upload_batches_status_check",
         ),
         Index(
-            "ix_report_upload_batches_active_id_chargement",
-            "id_chargement",
+            "ix_report_upload_batches_active_source_period",
+            "systeme_source",
+            "period_start",
+            "period_end",
             unique=True,
             postgresql_where=is_active.is_(True),
         ),
@@ -299,6 +302,7 @@ class ReportRsuFlowFact(Base):
     mois_evenement: Mapped[str] = mapped_column(String(7), nullable=False, index=True)
     code_region: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     nom_province: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    code_registre: Mapped[str] = mapped_column(String(64), nullable=False, default="RNP", index=True)
     type_unite: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     nb_nouvelles_inscriptions: Mapped[int] = mapped_column(Integer, nullable=False)
     mode_source: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -433,6 +437,10 @@ class ReportFmsTreatmentFact(Base):
     )
     source_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date_reference: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    debut_periode: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    fin_periode: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    date_evenement: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    mois_evenement: Mapped[str | None] = mapped_column(String(7), nullable=True, index=True)
     code_type_famille: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     code_niveau_risque: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     code_perimetre_programme: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
@@ -459,6 +467,10 @@ class ReportFmsBlockedFact(Base):
     )
     source_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
     date_reference: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    debut_periode: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    fin_periode: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    date_evenement: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    mois_evenement: Mapped[str | None] = mapped_column(String(7), nullable=True, index=True)
     code_motif_blocage: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     code_type_famille: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     code_region: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
