@@ -1,7 +1,7 @@
 services:
   api:
     build:
-      target: builder
+      target: api-builder
     command: ["/app/entrypoint.sh"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
@@ -13,7 +13,7 @@ services:
 
   worker:
     build:
-      target: builder
+      target: api-builder
     entrypoint: ["python", "-m", "reports.worker"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
@@ -24,7 +24,7 @@ services:
 
   web:
     build:
-      target: builder
+      target: web-builder
     working_dir: /app
     command: ["sh", "-c", "npm install && npm run dev"]
     volumes:
