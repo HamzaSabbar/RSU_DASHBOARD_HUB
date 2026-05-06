@@ -490,7 +490,8 @@ ASD_RESCORING = SectionSpec(
     "asd_rescoring",
     "Rescoring ASD",
     RESCORING_COLUMNS,
-    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS
+    + ("nb_sortants_personnes", "montant_mensuel_arrete_dh"),
     sheet_aliases=("22_ASD_Rescoring",),
 )
 ASD_FRAUD = SectionSpec(
@@ -499,7 +500,8 @@ ASD_FRAUD = SectionSpec(
     "Radiation pour fraude ASD",
     FRAUD_COLUMNS,
     FRAUD_ALIASES,
-    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS
+    + ("radiated_persons", "montant_mensuel_arrete_dh"),
     sheet_aliases=("23_ASD_Fraude",),
 )
 
@@ -525,7 +527,8 @@ AMO_RESCORING = SectionSpec(
     "amo_rescoring",
     "Rescoring AMO Tadamon",
     RESCORING_COLUMNS,
-    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS
+    + ("nb_sortants_personnes", "montant_mensuel_arrete_dh"),
     sheet_aliases=("32_AMO_Tadamon_Rescoring",),
 )
 AMO_FRAUD = SectionSpec(
@@ -534,7 +537,8 @@ AMO_FRAUD = SectionSpec(
     "Radiation pour fraude AMO Tadamon",
     FRAUD_COLUMNS,
     FRAUD_ALIASES,
-    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS + ("montant_mensuel_arrete_dh",),
+    optional_columns=PROGRAM_EVENT_OPTIONAL_COLUMNS
+    + ("radiated_persons", "montant_mensuel_arrete_dh"),
     sheet_aliases=("33_AMO_Tadamon_Fraude",),
 )
 

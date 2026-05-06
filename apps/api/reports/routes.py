@@ -4,15 +4,56 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.deps import get_current_user
-from db.models import User
+from auth.deps import get_current_admin_user, get_current_user
+from db.models import (
+    AuditLog,
+    BoardSnapshot,
+    ReportAmountRuleFact,
+    ReportCodeFact,
+    ReportFmsBlockedFact,
+    ReportFmsTreatmentFact,
+    ReportJob,
+    ReportProgramFlowFact,
+    ReportProgramFraudFact,
+    ReportProgramRescoringFact,
+    ReportProgramStockFact,
+    ReportProvinceFact,
+    ReportRegionFact,
+    ReportRsuAnnotationFact,
+    ReportRsuFlowFact,
+    ReportRsuStockFact,
+    ReportUploadBatch,
+    Upload,
+    User,
+)
 from db.session import get_session
 from reports import service
 from reports.schemas import ReportJobCreateResponse, ReportJobStatusResponse, ValidationResult
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+REPORT_FACT_MODELS = (
+    ReportAmountRuleFact,
+    ReportFmsBlockedFact,
+    ReportFmsTreatmentFact,
+    ReportProgramFraudFact,
+    ReportProgramRescoringFact,
+    ReportProgramFlowFact,
+    ReportProgramStockFact,
+    ReportRsuAnnotationFact,
+    ReportRsuFlowFact,
+    ReportRsuStockFact,
+    ReportCodeFact,
+    ReportProvinceFact,
+    ReportRegionFact,
+)
+
+
+async def _count_rows(session: AsyncSession, model: type[Any]) -> int:
+    return int(await session.scalar(select(func.count()).select_from(model)) or 0)
 
 
 @router.post("/jobs", response_model=ReportJobCreateResponse)
@@ -108,3 +149,38 @@ async def job_dashboard(
 ) -> dict[str, Any]:
     repo = service.repository_for_session(session)
     return await service.get_dashboard_json(repo, job_id)
+
+
+@router.delete("/admin/data")
+async def clear_report_data(
+    user: User = Depends(get_current_admin_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    counts: dict[str, int] = {
+        "reportJobs": await _count_rows(session, ReportJob),
+        "uploadBatches": await _count_rows(session, ReportUploadBatch),
+        "legacyUploads": await _count_rows(session, Upload),
+        "boardSnapshots": await _count_rows(session, BoardSnapshot),
+    }
+    counts["factRows"] = sum(
+        [await _count_rows(session, model) for model in REPORT_FACT_MODELS]
+    )
+
+    for model in REPORT_FACT_MODELS:
+        await session.execute(delete(model))
+    await session.execute(update(ReportUploadBatch).values(superseded_by_batch_id=None))
+    await session.execute(delete(ReportUploadBatch))
+    await session.execute(delete(ReportJob))
+    await session.execute(delete(BoardSnapshot))
+    await session.execute(delete(Upload))
+    session.add(
+        AuditLog(
+            user_id=user.id,
+            action="clear_report_data",
+            target_type="reports",
+            target_id=None,
+            audit_metadata=counts,
+        )
+    )
+    await session.commit()
+    return {"status": "cleared", "deleted": counts}

@@ -155,7 +155,7 @@ delta_pct = delta / inscriptions_mois_precedent
 
 If `inscriptions_mois_precedent = 0`, `delta_pct` is blank.
 
-### ASD - ménages actifs
+### ASD - ménages net cumulés
 
 Source: `21_ASD_Flux`
 
@@ -168,26 +168,13 @@ date_evenement in selected dashboard range
 Formula:
 
 ```text
-ASD ménages actifs = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
+ASD ménages net cumulés = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
 ```
 
-### ASD - personnes actives
+The uploaded client extracts track ASD at household level. Person-level ASD KPI
+cards are not displayed.
 
-Source: `21_ASD_Flux`
-
-Filter:
-
-```text
-date_evenement in selected dashboard range
-```
-
-Formula:
-
-```text
-ASD personnes actives = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)
-```
-
-### AMO Tadamon - ménages actifs
+### AMO Tadamon - ménages net cumulés
 
 Source: `31_AMO_Tadamon_Flux`
 
@@ -200,24 +187,11 @@ date_evenement in selected dashboard range
 Formula:
 
 ```text
-AMO Tadamon ménages actifs = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
+AMO Tadamon ménages net cumulés = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)
 ```
 
-### AMO Tadamon - personnes actives
-
-Source: `31_AMO_Tadamon_Flux`
-
-Filter:
-
-```text
-date_evenement in selected dashboard range
-```
-
-Formula:
-
-```text
-AMO Tadamon personnes actives = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)
-```
+The uploaded client extracts track AMO Tadamon at household level. Person-level
+AMO Tadamon KPI cards are not displayed.
 
 ### Demandes injectées FMS
 

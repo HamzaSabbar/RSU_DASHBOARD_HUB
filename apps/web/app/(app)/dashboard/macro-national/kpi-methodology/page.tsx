@@ -75,18 +75,6 @@ const kpiSections: MethodologySection[] = [
         ],
       },
       {
-        name: "RSU - personnes couvertes",
-        purpose:
-          "Donner, si la source le fournit, le volume de personnes couvertes par les ménages RSU affichés sur le dashboard.",
-        source: "10_RSU / Stock RNP/RSU",
-        calculation: [
-          "Filtrer code_registre = RSU",
-          "Filtrer type_unite = PERSONNES",
-          "Prendre le stock le plus récent avec date_reference <= date_reference_donnees",
-          "KPI = total_cumule",
-        ],
-      },
-      {
         name: "Nouvelles inscriptions RNP",
         purpose:
           "Suivre les nouvelles inscriptions individuelles RNP du mois courant.",
@@ -117,9 +105,9 @@ const kpiSections: MethodologySection[] = [
       "Ces KPI donnent le net cumulé des bénéficiaires ASD et AMO Tadamon dans la période chargée.",
     items: [
       {
-        name: "ASD - ménages actifs",
+        name: "ASD - ménages net cumulés",
         purpose:
-          "Afficher le nombre de ménages actifs dans le programme ASD à la date de référence.",
+          "Afficher le solde net cumulé des ménages ASD dans la période sélectionnée.",
         source: "21_ASD_Flux",
         calculation: [
           "Filtrer date_evenement dans la période sélectionnée",
@@ -127,33 +115,13 @@ const kpiSections: MethodologySection[] = [
         ],
       },
       {
-        name: "ASD - personnes actives",
+        name: "AMO Tadamon - ménages net cumulés",
         purpose:
-          "Afficher le nombre de personnes couvertes par les ménages ASD actifs.",
-        source: "21_ASD_Flux",
-        calculation: [
-          "Filtrer date_evenement dans la période sélectionnée",
-          "KPI = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)",
-        ],
-      },
-      {
-        name: "AMO Tadamon - ménages actifs",
-        purpose:
-          "Afficher le nombre de ménages actifs dans le programme AMO Tadamon.",
+          "Afficher le solde net cumulé des ménages AMO Tadamon dans la période sélectionnée.",
         source: "31_AMO_Tadamon_Flux",
         calculation: [
           "Filtrer date_evenement dans la période sélectionnée",
           "KPI = SUM(nb_entrants_menages) - SUM(nb_sortants_menages)",
-        ],
-      },
-      {
-        name: "AMO Tadamon - personnes actives",
-        purpose:
-          "Afficher le nombre de personnes couvertes par les ménages AMO Tadamon actifs.",
-        source: "31_AMO_Tadamon_Flux",
-        calculation: [
-          "Filtrer date_evenement dans la période sélectionnée",
-          "KPI = SUM(nb_entrants_personnes) - SUM(nb_sortants_personnes)",
         ],
       },
     ],

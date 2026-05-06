@@ -29,16 +29,16 @@ type ReportCards = {
     title: string;
     rnpPersonnesTotal: Metric;
     rsuMenagesTotal: Metric;
-    rsuPersonnesTotal: Metric;
+    rsuPersonnesTotal?: Metric;
     nouvellesInscriptionsMois: Metric;
     evolutionMois: Metric;
   };
   programmesSociaux: {
     title: string;
     asdMenagesActifs: Metric;
-    asdPersonnesActives: Metric;
+    asdPersonnesActives?: Metric;
     amoMenagesActifs: Metric;
-    amoPersonnesActives: Metric;
+    amoPersonnesActives?: Metric;
   };
   traitementFms: {
     title: string;
@@ -217,20 +217,11 @@ export function ReportDashboardView({
         <div className="grid gap-3 lg:grid-cols-2">
           <KpiBand title={d.cards.inscriptions.title}>
             <KpiTile metric={d.cards.inscriptions.rnpPersonnesTotal} sublabel="au RNP" />
-            <KpiTile
-              metric={d.cards.inscriptions.rsuMenagesTotal}
-              sublabel={peopleSublabel(d.cards.inscriptions.rsuPersonnesTotal)}
-            />
+            <KpiTile metric={d.cards.inscriptions.rsuMenagesTotal} />
           </KpiBand>
           <KpiBand title={d.cards.programmesSociaux.title}>
-            <KpiTile
-              metric={d.cards.programmesSociaux.asdMenagesActifs}
-              sublabel={peopleSublabel(d.cards.programmesSociaux.asdPersonnesActives)}
-            />
-            <KpiTile
-              metric={d.cards.programmesSociaux.amoMenagesActifs}
-              sublabel={peopleSublabel(d.cards.programmesSociaux.amoPersonnesActives)}
-            />
+            <KpiTile metric={d.cards.programmesSociaux.asdMenagesActifs} />
+            <KpiTile metric={d.cards.programmesSociaux.amoMenagesActifs} />
           </KpiBand>
         </div>
 
@@ -365,11 +356,6 @@ function SectionLabel({ children }: { children: React.ReactNode }): React.ReactE
       {children}
     </h2>
   );
-}
-
-function peopleSublabel(metric: Metric): string | undefined {
-  const value = metric.compactDisplay ?? metric.display;
-  return value ? `${value} personnes` : undefined;
 }
 
 function KpiTile({

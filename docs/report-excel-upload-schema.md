@@ -210,8 +210,6 @@ If included, required stock combinations:
 | `nom_province` | text | yes | Allows province-level top flux rankings. |
 | `nb_entrants_menages` | integer | yes | Source value for ASD entering-household flow and net flow. |
 | `nb_sortants_menages` | integer | yes | Source value for ASD exiting-household flow and net flow. |
-| `nb_entrants_personnes` | integer | no | Keeps person-level entering flow available for audit and future person-level views when the source provides it. |
-| `nb_sortants_personnes` | integer | no | Keeps person-level exiting flow available for audit and future person-level views when the source provides it. |
 | `montant_mensuel_entrants_dh` | decimal | no | Monthly amount added by ASD entrants, used for financial flow views when the source provides it. |
 | `montant_mensuel_sortants_dh` | decimal | no | Monthly amount stopped by ASD exits, used for financial flow views when the source provides it. |
 
@@ -224,7 +222,7 @@ If included, required stock combinations:
 | `nom_region` | text | yes | Allows rescoring rows to be validated and attributed geographically. |
 | `nom_province` | text | yes | Keeps province attribution for rescoring rows. |
 | `nb_sortants_menages` | integer | yes | Source value for ASD households exited by rescoring and savings calculation. |
-| `nb_sortants_personnes` | integer | yes | Source value for ASD persons exited by rescoring. |
+| `nb_sortants_personnes` | integer | no | Legacy optional field. Do not request it when the source tracks ASD/AMO at household level only. |
 | `nb_menages_non_communiques` | integer | yes | Used for the dashboard footnote about non-communicated households. |
 | `montant_mensuel_arrete_dh` | decimal | no | Direct monthly stopped amount. If empty, the app uses configured amount rules for `ASD`. |
 
@@ -237,7 +235,7 @@ If included, required stock combinations:
 | `nom_region` | text | yes | Allows fraud rows to be validated and attributed geographically. |
 | `nom_province` | text | yes | Keeps province attribution for fraud rows. |
 | `radiated_hh_count` | integer | yes | Source value for ASD households radiated for fraud and savings calculation. Alias accepted: `nb_menages_radies`. |
-| `radiated_persons` | integer | yes | Source value for ASD persons radiated for fraud. Alias accepted: `nb_personnes_radiees`. |
+| `radiated_persons` | integer | no | Legacy optional field. Do not request it when the source tracks ASD/AMO at household level only. Alias accepted: `nb_personnes_radiees`. |
 | `montant_mensuel_arrete_dh` | decimal | no | Direct monthly stopped amount. If empty, the app uses configured amount rules for `ASD`. |
 
 ## 30_AMO_Tadamon_Stock
