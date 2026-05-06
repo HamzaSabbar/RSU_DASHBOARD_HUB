@@ -1,4 +1,8 @@
 services:
+  db:
+    ports:
+      - "5432:5432"
+
   api:
     build:
       target: api-builder
@@ -10,6 +14,8 @@ services:
       - ./apps/api:/app
       - ./data/uploads:/data/uploads
       - ./data/storage:/data/storage
+    ports:
+      - "8000:8000"
 
   worker:
     build:
