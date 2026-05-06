@@ -24,7 +24,7 @@ services:
 
   web:
     build:
-      target: deps
+      target: builder
     working_dir: /app
     command: ["sh", "-c", "npm install && npm run dev"]
     volumes:
