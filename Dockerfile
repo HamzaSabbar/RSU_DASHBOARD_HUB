@@ -33,7 +33,9 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=api-builder /opt/venv /opt/venv
 COPY --from=api-builder /app /app
-RUN chmod +x /app/entrypoint.sh && chown -R app:app /app
+RUN mkdir -p /data/uploads /data/storage \
+ && chmod +x /app/entrypoint.sh \
+ && chown -R app:app /app /data
 
 USER app
 EXPOSE 8000
