@@ -102,7 +102,7 @@ async def ingest_report_batch(
         and batch.period_end is not None
         and _periods_overlap(period_start, period_end, batch.period_start, batch.period_end)
     ]
-    if overlapping:
+    if overlapping and not record.replace_requested:
         raise ValueError(
             "Période de chargement chevauchante déjà active pour cette source. "
             "Corrigez ou remplacez la période existante avant d'importer ce fichier."
@@ -110,7 +110,8 @@ async def ingest_report_batch(
 
     batch_id = uuid.uuid4()
     now = datetime.now(tz=UTC)
-    for old_batch in exact_period:
+    superseded_batches = exact_period + overlapping
+    for old_batch in superseded_batches:
         old_batch.status = "superseded"
         old_batch.is_active = False
         old_batch.superseded_at = now
@@ -137,7 +138,7 @@ async def ingest_report_batch(
     )
     session.add(batch)
     await session.flush()
-    for old_batch in exact_period:
+    for old_batch in superseded_batches:
         old_batch.superseded_by_batch_id = batch.id
     await session.flush()
 
@@ -277,6 +278,7 @@ async def available_periods(session: AsyncSession) -> dict[str, Any]:
                 "batchId": str(batch.id),
                 "jobId": str(batch.job_id),
                 "idChargement": batch.id_chargement,
+                "originalFilename": batch.original_filename,
                 "dateRapport": _iso(batch.report_date),
                 "debutPeriode": _iso(batch.period_start),
                 "finPeriode": _iso(batch.period_end),

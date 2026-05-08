@@ -98,26 +98,24 @@ RSU ménages cumulés = SUM(nb_nouvelles_inscriptions)
 
 ### RSU - personnes couvertes
 
-Source: `10_RSU` / `Stock RNP/RSU`
-
-If this stock section is not supplied, the KPI is unavailable rather than `0`.
+Source: `12_RSU_Nouvelles_Inscriptions`
 
 Filter:
 
 ```text
 code_registre = RSU
 type_unite = PERSONNES
-latest date_reference <= date_reference_donnees
+date_evenement in selected dashboard range
 ```
 
 Formula:
 
 ```text
-RSU personnes = total_cumule
+RSU personnes couvertes = SUM(nb_nouvelles_personnes_rsu)
 ```
 
-This metric is optional context. The main RSU cumulative KPI is `RSU` / `MENAGES`
-because RSU is household/family-level in the client data model.
+This value is displayed only as secondary context under the RSU household card,
+not as a standalone top KPI.
 
 ### Nouvelles inscriptions RNP
 
@@ -427,21 +425,22 @@ Economie budgétaire totale = Economie fraude + Economie rescoring
 
 ## Charts And Tables
 
-### Dynamique des inscriptions au RNP
+### Dynamique des inscriptions au RSU
 
-Source: `11_RNP_Nouvelles_Inscriptions`
+Source: `12_RSU_Nouvelles_Inscriptions`
 
 Main monthly formula:
 
 ```text
-RNP monthly value =
-  SUM(nb_nouvelles_inscriptions)
+RSU monthly value =
+  SUM(nb_nouveaux_menages_rsu)
   grouped by mois_evenement
-  filtered by type_unite = PERSONNES
+  filtered by type_unite = MENAGES
 ```
 
-The legacy sheet name `11_RSU_Nouvelles_Inscriptions` remains accepted for
-older files, but new files should use the RNP sheet name.
+The RSU chart follows the household/family metric by default. If the report is
+configured to graph persons, it uses the RSU `PERSONNES` facts derived from
+`nb_nouvelles_personnes_rsu`.
 
 Monthly evolution table:
 

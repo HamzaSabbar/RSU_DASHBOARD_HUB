@@ -7,7 +7,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        ready: "bg-emerald-50 text-brand-dark ring-1 ring-inset ring-emerald-200",
+        ready: "bg-emerald-50 text-brand-primary ring-1 ring-inset ring-emerald-100",
         empty: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200",
         danger: "bg-red-50 text-brand-danger ring-1 ring-inset ring-red-200",
       },

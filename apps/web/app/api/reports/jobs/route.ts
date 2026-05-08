@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { canManageReports } from "@/lib/roles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const accessToken = session?.accessToken as string | undefined;
   if (!accessToken) {
     return NextResponse.json({ detail: "unauthenticated" }, { status: 401 });
+  }
+  const role = session?.user && typeof session.user === "object"
+    ? (session.user as { role?: string }).role
+    : undefined;
+  if (!canManageReports(role)) {
+    return NextResponse.json({ detail: "forbidden" }, { status: 403 });
   }
 
   const sourceUrl = new URL(req.url);

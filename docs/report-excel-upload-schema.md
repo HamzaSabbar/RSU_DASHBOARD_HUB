@@ -1,12 +1,13 @@
 # RSU Dashboard Excel Upload Schema
 
-This document describes the period-fact Excel workbook expected by the RSU
-dashboard upload. The client should send facts for explicit reporting periods.
+This document describes the daily-fact Excel workbook expected by the RSU
+dashboard upload. The client should send one fact row per event day and
+geography/business grouping.
 Stable reference data, cumulative calculations, upload metadata, display
 defaults, and internal codes are owned by the application.
 
-The goal of this workbook is to give the dashboard the source period numbers it
-cannot compute by itself. The app stores all validated periods and derives
+The goal of this workbook is to give the dashboard the source daily numbers it
+cannot compute by itself. The app stores all validated daily facts and derives
 cumulative dashboard values from active uploaded history.
 
 ## General Rules
@@ -20,10 +21,11 @@ cumulative dashboard values from active uploaded history.
 - Missing required columns fail validation.
 - Numeric values must be non-negative.
 - Dates may be Excel dates or text in `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, or `YYYY/MM/DD`.
-- Every fact row should include `debut_periode` and `fin_periode`.
-- The first production upload should contain historical period rows from the beginning of available data to the current cut-off date.
-- Later uploads should contain only the new weekly period rows.
-- The client should not include `id_chargement`, `code_region`, `date_evenement`, `mois_evenement`, stock sheets, RSU annotations, reference sheets, amount rules, or repeated source/comment columns in new workbooks.
+- Every fact row should include `date_evenement`.
+- `01_Parametres` still contains the global workbook coverage dates: `debut_periode` and `fin_periode`.
+- The first production upload should contain historical daily rows from the beginning of available data to the current cut-off date.
+- Later uploads should contain only the new daily rows.
+- The client should not include `id_chargement`, `code_region`, `mois_evenement`, stock sheets, RSU annotations, reference sheets, amount rules, or repeated source/comment columns in new workbooks.
 
 ## Client Geography Format
 
@@ -53,7 +55,7 @@ The client sends business labels, not internal app codes.
 
 | Client field | Required format | Why needed |
 |---|---|---|
-| `type_famille` | Family/population category label from the FMS source, for example `T1`, `T2`, `TOUS`, `multi noyau`, or the client’s official label. | Needed only because the dashboard shows the FMS matrix by family type. The app cannot infer this from totals such as `demandes_injectees` or `doute_confirme`. |
+| `type_famille` | Family/population category label from the FMS source, for example `Individuels`, `Mariés avec enfants`, `Mono-parental`, `Multi-noyaux`, or the client’s official label. | Needed only because the dashboard shows the FMS matrix by family type. The app cannot infer this from totals such as `demandes_injectees` or `doute_confirme`. |
 | `niveau_risque` | Risk level label from the FMS source, for example `eleve`, `moyen`, `faible`. | Needed because the FMS matrix groups treated requests by risk level. The app cannot infer the risk level from the aggregate counts. |
 | `motif_blocage` | Blocking reason label from the FMS source, for example `fms`, `multi`, `indiv`. | Needed for the blocked-households breakdown by reason. |
 
@@ -67,19 +69,21 @@ use it in calculations.
 
 ## Dates
 
-The client supplies only the workbook reporting period in `01_Parametres`:
+The client supplies the workbook coverage period in `01_Parametres`:
 
 - `debut_periode`
 - `fin_periode`
 
-Each fact row supplies its own `debut_periode` and `fin_periode`.
-`date_evenement` is not a client field. It is an internal dashboard filtering
-date. For client data-only uploads, the app derives:
+Each fact row supplies its own `date_evenement`. For a daily source extract,
+the app stores that date as the row's internal event date and derives the
+monthly bucket from it. Older uploads that still send row-level
+`debut_periode`/`fin_periode` remain accepted; for those rows, the app derives
+`date_evenement` from `fin_periode`.
 
 | Internal field | App derivation | Why needed |
 |---|---|---|
-| `date_evenement` | From each row's `fin_periode`. | Used internally by the dashboard date-range filter. |
-| `mois_evenement` | Month of `fin_periode`, formatted `YYYY-MM`. | Used internally for monthly charts and current-month KPIs. |
+| `date_evenement` | From the row's `date_evenement`, or from `fin_periode` for legacy period rows. | Used internally by the dashboard date-range filter. |
+| `mois_evenement` | Month of `date_evenement`, formatted `YYYY-MM`. | Used internally for monthly charts and current-month KPIs. |
 | `date_reference` | From `date_reference_donnees` if supplied, otherwise `fin_periode`. | Used internally for legacy stock/snapshot metrics. |
 
 ## Required Sheets
@@ -107,7 +111,7 @@ date. For client data-only uploads, the app derives:
 uploads.
 
 Stock sheets are legacy/source-dependent. New client uploads should omit them.
-The app derives cumulative values from period facts. Do not send placeholder
+The app derives cumulative values from daily facts. Do not send placeholder
 zero rows to satisfy the dashboard.
 
 ## App-Owned Fields
@@ -120,8 +124,8 @@ These fields are configured, generated, or normalized by the application:
 | Code lists | Validate and label register/unit/FMS/program values. |
 | Amount rules | Compute savings when fraud/rescoring rows omit `montant_mensuel_arrete_dh`. |
 | Upload metadata | Generate internal upload ID and uploader metadata. |
-| Date fields | Derive internal event/month dates from row-level period dates. |
-| Cumulative metrics | Sum active period facts over the selected dashboard range. |
+| Date fields | Derive internal month dates from row-level `date_evenement`. |
+| Cumulative metrics | Sum active daily facts over the selected dashboard range. |
 | Display defaults | Language, RSU chart unit, trend method, and fallback behavior. |
 | RSU annotations | Managed in the app, not in the client upload. |
 
@@ -131,8 +135,8 @@ Must contain exactly one active row.
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Defines the beginning of the reporting period covered by every fact row in the workbook. |
-| `fin_periode` | date | yes | Defines the end of the reporting period and is used by the app to derive internal event/month dates. |
+| `debut_periode` | date | yes | Defines the first event date covered by the workbook. |
+| `fin_periode` | date | yes | Defines the last event date covered by the workbook. |
 | `version_fichier` | text | no | Helps troubleshoot which client template or extraction version produced the file. |
 | `date_reference_donnees` | date | no | Lets the app pick the correct stock snapshot date if it differs from `fin_periode`. If empty, the app uses `fin_periode`. |
 | `date_heure_extraction` | datetime | no | Helps audit when the source system generated the extract. It does not change KPI calculations. |
@@ -162,12 +166,14 @@ number of RSU households/families.
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `nom_region` | text | yes | Allows the app to map the row to the region catalog for regional validation. |
 | `nom_province` | text | yes | Allows province-level aggregation and validation against the region. |
-| `type_unite` | code | no | Optional legacy/unit field. If omitted, the app derives `PERSONNES`, because RNP is individual-level. |
-| `nb_nouvelles_inscriptions` | integer | yes | Source value for monthly RNP new individual registration KPIs and trend charts. |
+| `nb_nouvelles_inscriptions` | integer | yes | Source value for new individual registrations on the event day. Alias accepted: `nb_nouvelles_inscriptions_personnes`. |
+
+RNP is individual-only. New workbooks should not send `type_unite`; the app
+derives `PERSONNES` for this sheet. Older files that include `type_unite` remain
+accepted for compatibility.
 
 The app still accepts the legacy sheet name `11_RSU_Nouvelles_Inscriptions`,
 but new workbooks should use `11_RNP_Nouvelles_Inscriptions` so the source is
@@ -177,14 +183,16 @@ not mislabeled as RSU family data.
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `nom_region` | text | yes | Allows the app to map the row to the region catalog for regional validation. |
 | `nom_province` | text | yes | Allows province-level aggregation and validation against the region. |
-| `nb_nouveaux_menages_rsu` | integer | yes | Source value for RSU household/family registrations during the row period. |
+| `nb_nouveaux_menages_rsu` | integer | yes | Source value for new RSU household/family registrations on the event day. |
+| `nb_nouvelles_personnes_rsu` | integer | yes | Source value for people covered by the new RSU households on the event day. Used only as the secondary person context under the RSU household KPI. |
 
-The app derives `code_registre = RSU` and `type_unite = MENAGES`. Do not use
-RNP individual registrations or `individus_rsu` as this metric.
+The app derives `code_registre = RSU` and stores the household count as
+`type_unite = MENAGES`. When `nb_nouvelles_personnes_rsu` is supplied, the app
+also creates an RSU `PERSONNES` fact for the secondary person context. Do not
+use RNP individual registrations as either RSU metric.
 
 ## 20_ASD_Stock
 
@@ -204,12 +212,13 @@ If included, required stock combinations:
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `nom_region` | text | yes | Allows regional ASD/AMO flux aggregation. |
 | `nom_province` | text | yes | Allows province-level top flux rankings. |
 | `nb_entrants_menages` | integer | yes | Source value for ASD entering-household flow and net flow. |
+| `nb_entrants_personnes` | integer | yes | Source value for people covered by ASD entering households. |
 | `nb_sortants_menages` | integer | yes | Source value for ASD exiting-household flow and net flow. |
+| `nb_sortants_personnes` | integer | yes | Source value for people covered by ASD exiting households. |
 | `montant_mensuel_entrants_dh` | decimal | no | Monthly amount added by ASD entrants, used for financial flow views when the source provides it. |
 | `montant_mensuel_sortants_dh` | decimal | no | Monthly amount stopped by ASD exits, used for financial flow views when the source provides it. |
 
@@ -217,8 +226,7 @@ If included, required stock combinations:
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `nom_region` | text | yes | Allows rescoring rows to be validated and attributed geographically. |
 | `nom_province` | text | yes | Keeps province attribution for rescoring rows. |
 | `nb_sortants_menages` | integer | yes | Source value for ASD households exited by rescoring and savings calculation. |
@@ -230,8 +238,7 @@ If included, required stock combinations:
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `nom_region` | text | yes | Allows fraud rows to be validated and attributed geographically. |
 | `nom_province` | text | yes | Keeps province attribution for fraud rows. |
 | `radiated_hh_count` | integer | yes | Source value for ASD households radiated for fraud and savings calculation. Alias accepted: `nb_menages_radies`. |
@@ -246,7 +253,8 @@ Same columns and required stock combinations as `20_ASD_Stock`.
 
 ## 31_AMO_Tadamon_Flux
 
-Same columns as `21_ASD_Flux`.
+Same columns as `21_ASD_Flux`, including both household and person entrants /
+sortants.
 
 ## 32_AMO_Tadamon_Rescoring
 
@@ -262,8 +270,7 @@ the app uses configured amount rules for `AMO_TADAMON`.
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `type_famille` | text | yes | Source classification needed to build the FMS matrix by family/population type. The app cannot derive it from aggregate counts. |
 | `niveau_risque` | text | yes | Source classification needed to build the FMS matrix by risk level. The app cannot derive it from aggregate counts. |
 | `nom_region` | text | yes | Allows regional validation and attribution for FMS treatment rows. |
@@ -278,8 +285,7 @@ the app uses configured amount rules for `AMO_TADAMON`.
 
 | Column | Type | Required | Why needed |
 |---|---:|---:|---|
-| `debut_periode` | date | yes | Start date of the period represented by this row. |
-| `fin_periode` | date | yes | End date of the period represented by this row. |
+| `date_evenement` | date | yes | Daily event date represented by this row. |
 | `motif_blocage` | text | yes | Source classification needed for the blocked-households breakdown by blocking reason. |
 | `type_famille` | text | yes | Keeps blocked households aligned with the same FMS family/population categories used in treatment rows. |
 | `nom_region` | text | yes | Allows regional blocked-household aggregation. |
@@ -290,9 +296,9 @@ the app uses configured amount rules for `AMO_TADAMON`.
 ## Recommended Client Extraction Granularity
 
 - Stock sheets should contain one row per unit and relevant register/program code.
-- Flow sheets should contain one row per region, province, and unit or metric combination for the workbook period.
-- FMS treatment sheets should contain one row per family type, risk level, region, and province for the workbook period.
-- FMS blocked sheets should contain one row per blocking reason, family type, region, and province for the workbook period.
+- Flow sheets should contain one row per event day, region, province, and metric combination.
+- FMS treatment sheets should contain one row per event day, family type, risk level, region, and province.
+- FMS blocked sheets should contain one row per event day, blocking reason, family type, region, and province.
 - All rows in one workbook should represent one coherent reporting extraction.
 
 ## Minimal Workbook Skeleton
@@ -310,7 +316,7 @@ fields or grouped fact sheets:
 
 - Legacy reference/configuration sheets: `02_Regions`, `03_Provinces`, `04_Codes`, `50_Regles_Montant`
 - Legacy grouped fact sheets: `10_RSU`, `20_ASD`, `30_AMO_Tadamon`, `40_FMS`
-- Legacy generated columns: `code_region`, `date_reference`, `date_evenement`, `mois_evenement`, `mode_source`, `systeme_source`, `commentaires`
+- Legacy generated/period columns: `code_region`, `date_reference`, `debut_periode`, `fin_periode`, `mois_evenement`, `mode_source`, `systeme_source`, `commentaires`
 - Legacy FMS code columns: `code_type_famille`, `code_niveau_risque`, `code_motif_blocage`, `code_perimetre_programme`
 - Legacy `12_RSU_Annotations`
 

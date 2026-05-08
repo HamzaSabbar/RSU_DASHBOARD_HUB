@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   BookOpen,
@@ -7,6 +8,8 @@ import {
   LineChart,
   TableProperties,
 } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { canManageReports } from "@/lib/roles";
 import {
   Card,
   CardContent,
@@ -48,7 +51,7 @@ const kpiSections: MethodologySection[] = [
   {
     title: "Inscriptions et registre",
     description:
-      "Ces KPI mesurent la taille cumulée des registres et le rythme des nouvelles inscriptions RNP.",
+      "Ces KPI mesurent la taille cumulée des registres et le rythme des nouvelles inscriptions RSU.",
     items: [
       {
         name: "RNP - personnes",
@@ -72,6 +75,18 @@ const kpiSections: MethodologySection[] = [
           "Filtrer type_unite = MENAGES",
           "Filtrer date_evenement dans la période sélectionnée",
           "KPI = SUM(nb_nouvelles_inscriptions)",
+        ],
+      },
+      {
+        name: "RSU - personnes couvertes",
+        purpose:
+          "Afficher le nombre de personnes couvertes comme contexte secondaire sous le KPI RSU ménages.",
+        source: "12_RSU_Nouvelles_Inscriptions",
+        calculation: [
+          "Filtrer code_registre = RSU",
+          "Filtrer type_unite = PERSONNES",
+          "Filtrer date_evenement dans la période sélectionnée",
+          "KPI = SUM(nb_nouvelles_personnes_rsu)",
         ],
       },
       {
@@ -289,16 +304,16 @@ const visualSections: MethodologySection[] = [
       "Les graphiques utilisent les mêmes données que les KPI, puis les agrègent par mois, région, province ou famille de risque.",
     items: [
       {
-        name: "Dynamique des inscriptions au RNP",
+        name: "Dynamique des inscriptions au RSU",
         purpose:
-          "Visualiser l'évolution mensuelle des nouvelles inscriptions individuelles RNP.",
-        source: "11_RNP_Nouvelles_Inscriptions",
+          "Visualiser l'évolution mensuelle des nouvelles inscriptions ménages RSU.",
+        source: "12_RSU_Nouvelles_Inscriptions",
         calculation: [
           "Grouper par mois_evenement",
-          "Utiliser type_unite = PERSONNES si la colonne est absente",
-          "Valeur mensuelle = SUM(nb_nouvelles_inscriptions)",
+          "Utiliser type_unite = MENAGES par défaut",
+          "Valeur mensuelle = SUM(nb_nouveaux_menages_rsu)",
         ],
-        note: "Le dashboard peut encore lire l'ancien nom de feuille 11_RSU_Nouvelles_Inscriptions pour compatibilité.",
+        note: "Si le rapport est configuré pour grapher les personnes, le dashboard utilise les faits RSU PERSONNES dérivés de nb_nouvelles_personnes_rsu.",
       },
       {
         name: "Ligne de tendance RNP",
@@ -394,7 +409,11 @@ const visualSections: MethodologySection[] = [
   },
 ];
 
-export default function KpiMethodologyPage(): React.ReactElement {
+export default async function KpiMethodologyPage(): Promise<React.ReactElement> {
+  const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (!canManageReports(role)) redirect("/dashboard/macro-national");
+
   return (
     <div className="space-y-6">
       <header className="space-y-4">

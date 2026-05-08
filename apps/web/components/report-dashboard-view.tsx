@@ -1,5 +1,6 @@
 "use client";
 
+import { Download } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -14,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { DashboardChartId } from "@/lib/dashboard-export";
 
 type Metric = {
   label: string;
@@ -29,7 +31,7 @@ type ReportCards = {
     title: string;
     rnpPersonnesTotal: Metric;
     rsuMenagesTotal: Metric;
-    rsuPersonnesTotal?: Metric;
+    rsuPersonnesCouvertes?: Metric;
     nouvellesInscriptionsMois: Metric;
     evolutionMois: Metric;
   };
@@ -150,6 +152,7 @@ export type ReportDashboard = {
   charts: {
     rsuInscriptionsMensuelles: {
       title: string;
+      unit?: string;
       series: RsuPoint[];
       trend: RsuTrendPoint[];
     };
@@ -188,45 +191,86 @@ export type ReportDashboard = {
   };
 };
 
-const GREEN = "#006B35";
-const GREEN_SOFT = "#55A873";
-const RED = "#D40000";
-const RED_DARK = "#B00000";
-const GRAY = "#737373";
-const GRID = "#E3E8E5";
+const GREEN = "#1F8A5B";
+const GREEN_DARK = "#0A3D2A";
+const GREEN_SOFT = "#BDE8CF";
+const RED = "#D73838";
+const RED_DARK = "#B32424";
+const GRAY = "#707070";
+const GRID = "#ECECEC";
 
 export function ReportDashboardView({
   dashboard,
+  mode = "interactive",
+  chartId,
+  canExport = true,
 }: {
   dashboard: ReportDashboard;
+  mode?: "interactive" | "print";
+  chartId?: DashboardChartId;
+  canExport?: boolean;
 }): React.ReactElement {
   const d = dashboard;
-  const referenceDate = d.meta.dateRapport ?? d.meta.dateReferenceDonnees;
   const budget = d.cards.economieBudgetaire;
+  const isPrint = mode === "print";
+  const exportQuery = dashboardDateQuery(d);
+
+  if (chartId) {
+    return (
+      <div
+        className="mx-auto max-w-[1080px] bg-white text-brand-ink"
+        data-chart-export-target="true"
+        data-export-ready="true"
+      >
+        {renderSingleChart(chartId, d)}
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-[1180px] bg-[#EEF0F1] pb-4 text-[#1D2A22] shadow-sm">
-      <header className="flex h-12 items-center justify-between bg-[#005E2D] px-5 text-white">
-        <h1 className="text-base font-bold tracking-normal">
-          {d.meta.titreRapport ?? "Tableau de bord cumulatif de suivi RSU"}
-        </h1>
-        <span className="text-xs font-medium">{referenceDate ? formatDate(referenceDate) : ""}</span>
-      </header>
-
-      <main className="space-y-3 p-4">
-        <div className="grid gap-3 lg:grid-cols-2">
-          <KpiBand title={d.cards.inscriptions.title}>
-            <KpiTile metric={d.cards.inscriptions.rnpPersonnesTotal} sublabel="au RNP" />
-            <KpiTile metric={d.cards.inscriptions.rsuMenagesTotal} />
-          </KpiBand>
-          <KpiBand title={d.cards.programmesSociaux.title}>
-            <KpiTile metric={d.cards.programmesSociaux.asdMenagesActifs} />
-            <KpiTile metric={d.cards.programmesSociaux.amoMenagesActifs} />
-          </KpiBand>
+    <div
+      className="mx-auto max-w-[1180px] space-y-5 text-brand-ink"
+      data-export-ready="true"
+    >
+      <section className="grid gap-5 xl:grid-cols-2">
+        <div className="space-y-2">
+          <SectionLabel>{d.cards.inscriptions.title}</SectionLabel>
+          <div className="grid gap-3 md:grid-cols-2">
+            <KeyMetricCard metric={d.cards.inscriptions.rnpPersonnesTotal} sublabel="au RNP" />
+            <KeyMetricCard
+              metric={d.cards.inscriptions.rsuMenagesTotal}
+              sublabel={registrationPersonSublabel(
+                "au RSU",
+                d.cards.inscriptions.rsuPersonnesCouvertes,
+              )}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <Panel title={d.charts.rsuInscriptionsMensuelles.title}>
+        <div className="space-y-2">
+          <SectionLabel>{d.cards.programmesSociaux.title}</SectionLabel>
+          <div className="grid gap-3 md:grid-cols-2">
+            <KeyMetricCard
+              metric={d.cards.programmesSociaux.asdMenagesActifs}
+              sublabel={personSublabel(d.cards.programmesSociaux.asdPersonnesActives)}
+            />
+            <KeyMetricCard
+              metric={d.cards.programmesSociaux.amoMenagesActifs}
+              sublabel={personSublabel(d.cards.programmesSociaux.amoPersonnesActives)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-3 xl:grid-cols-2">
+        <Panel
+          title={d.charts.rsuInscriptionsMensuelles.title}
+          subtitle={`RSU - ${unitLabel(d.charts.rsuInscriptionsMensuelles.unit)}`}
+          exportChartId="rsu-inscriptions"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={isPrint}
+        >
             <RsuChart
               points={d.charts.rsuInscriptionsMensuelles.series}
               trend={d.charts.rsuInscriptionsMensuelles.trend}
@@ -240,9 +284,16 @@ export function ReportDashboardView({
               ]}
               rows={d.tables.rsuEvolution}
             />
-          </Panel>
+        </Panel>
 
-          <Panel title={d.charts.asdEntreesSorties.title}>
+        <Panel
+          title={d.charts.asdEntreesSorties.title}
+          subtitle="Section 20. ASD - ménages"
+          exportChartId="asd-entrees-sorties"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={isPrint}
+        >
             <AsdChart points={d.charts.asdEntreesSorties.series} />
             <CompactTable
               columns={[
@@ -253,49 +304,83 @@ export function ReportDashboardView({
               ]}
               rows={d.tables.asdEvolution}
             />
-          </Panel>
-        </div>
+        </Panel>
+      </div>
 
-        <div className="space-y-2">
-          <SectionLabel>Traitement FMS</SectionLabel>
-          <div className="grid gap-3 md:grid-cols-3">
-            <KpiTile metric={d.cards.traitementFms.demandesTraitees} sublabel={d.cards.traitementFms.tauxTraitementPct.display ?? ""} />
-            <KpiTile metric={d.cards.resultatFms.douteConfirme} sublabel={d.cards.resultatFms.douteConfirmePct.display ?? ""} tone="red" />
-            <KpiTile metric={d.cards.resultatFms.douteLeve} sublabel={d.cards.resultatFms.douteLevePct.display ?? ""} />
-          </div>
+      <section className="space-y-2">
+        <SectionLabel>Système de gestion de la fraude</SectionLabel>
+        <p className="text-xs text-brand-muted">Demandes traitées - matrice de risque.</p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <KpiTile
+            metric={d.cards.traitementFms.demandesTraitees}
+            sublabel={d.cards.traitementFms.tauxTraitementPct.display ?? ""}
+          />
+          <KpiTile
+            metric={d.cards.resultatFms.douteConfirme}
+            sublabel={d.cards.resultatFms.douteConfirmePct.display ?? ""}
+            tone="red"
+          />
+          <KpiTile
+            metric={d.cards.resultatFms.douteLeve}
+            sublabel={d.cards.resultatFms.douteLevePct.display ?? ""}
+          />
         </div>
+      </section>
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <KpiBand title="Radiation pour fraude">
-            <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "asdMenagesRadies")} tone="red" />
-            <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "amoMenagesRadies")} tone="red" />
-          </KpiBand>
-          <KpiBand title="Rescoring">
-            <KpiTile metric={metricFromBlock(d.cards.rescoring, "asdMenagesSortants")} tone="red" />
-            <KpiTile metric={metricFromBlock(d.cards.rescoring, "amoMenagesSortants")} tone="red" />
-          </KpiBand>
-        </div>
-
-        <div className="space-y-2">
-          <SectionLabel>{budget.title}</SectionLabel>
-          <div className="grid gap-3 md:grid-cols-3">
-            <KpiTile metric={budget.fraude} tone="green" />
-            <KpiTile metric={budget.rescoring} tone="green" />
-            <KpiTile metric={budget.total} tone="greenSolid" />
-          </div>
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-2">
-          <Panel title={d.charts.fmsMatriceRisque.title}>
+      <div className="grid gap-3 xl:grid-cols-2">
+        <Panel
+          title={d.charts.fmsMatriceRisque.title}
+          subtitle="Famille - niveau de risque"
+          exportChartId="fms-matrice-risque"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={isPrint}
+        >
             <FmsMatrixChart rows={d.charts.fmsMatriceRisque.rows} />
-          </Panel>
-          <Panel title={d.charts.menagesBloquesNational.title}>
+        </Panel>
+        <Panel
+          title={d.charts.menagesBloquesNational.title}
+          subtitle="Stock courant par motif"
+          exportChartId="menages-bloques-national"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={isPrint}
+        >
             <BlockedNationalChart rows={d.charts.menagesBloquesNational.rows} />
-          </Panel>
-        </div>
+        </Panel>
+      </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <Panel title={d.charts.fluxRegionauxAsdAmot.title}>
+      <section className="space-y-2">
+        <SectionLabel>{budget.title}</SectionLabel>
+        <p className="text-xs text-brand-muted">Flux ASD / AMO et stock bloqué par région.</p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <KpiTile metric={budget.fraude} tone="green" />
+          <KpiTile metric={budget.rescoring} tone="green" />
+          <KpiTile metric={budget.total} tone="greenSolid" />
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <SectionLabel>Radiation et rescoring</SectionLabel>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "asdMenagesRadies")} tone="red" />
+          <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "amoMenagesRadies")} tone="red" />
+          <KpiTile metric={metricFromBlock(d.cards.rescoring, "asdMenagesSortants")} tone="red" />
+          <KpiTile metric={metricFromBlock(d.cards.rescoring, "amoMenagesSortants")} tone="red" />
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <SectionLabel>Découpage régional</SectionLabel>
+        <div className="grid gap-3 xl:grid-cols-2">
+          <Panel
+            title={d.charts.fluxRegionauxAsdAmot.title}
+            subtitle="T1 régions"
+            exportChartId="flux-regionaux"
+            exportQuery={exportQuery}
+            canExport={canExport}
+            isPrint={isPrint}
+          >
             <RegionFluxChart rows={d.charts.fluxRegionauxAsdAmot.rows} />
             <CompactTable
               columns={[
@@ -308,7 +393,14 @@ export function ReportDashboardView({
               headerColor="green"
             />
           </Panel>
-          <Panel title={d.charts.menagesBloquesRegionaux.title}>
+          <Panel
+            title={d.charts.menagesBloquesRegionaux.title}
+            subtitle="Stock courant"
+            exportChartId="menages-bloques-regionaux"
+            exportQuery={exportQuery}
+            canExport={canExport}
+            isPrint={isPrint}
+          >
             <RegionBlockedChart rows={d.charts.menagesBloquesRegionaux.rows} />
             <CompactTable
               columns={[
@@ -320,42 +412,101 @@ export function ReportDashboardView({
             />
           </Panel>
         </div>
+      </section>
 
-        {d.footnotes.length > 0 ? (
-          <ol className="space-y-1 px-1 text-[11px] leading-4 text-slate-700">
-            {d.footnotes.map((note, index) => (
-              <li key={`${note}-${index}`}>
-                {index + 1}- {note}
-              </li>
-            ))}
-          </ol>
-        ) : null}
-      </main>
+      {d.footnotes.length > 0 ? (
+        <ol className="rounded-lg border border-brand-border bg-white px-4 py-3 text-[11px] leading-4 text-brand-muted">
+          {d.footnotes.map((note, index) => (
+            <li key={`${note}-${index}`}>
+              {index + 1}- {note}
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </div>
-  );
-}
-
-function KpiBand({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}): React.ReactElement {
-  return (
-    <section className="space-y-1">
-      <SectionLabel>{title}</SectionLabel>
-      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
-    </section>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
-    <h2 className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#0D5130]">
+    <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-ink">
       {children}
     </h2>
   );
+}
+
+function KeyMetricCard({
+  metric,
+  sublabel,
+}: {
+  metric: Metric;
+  sublabel?: string;
+}): React.ReactElement {
+  return (
+    <div className="relative min-h-[154px] rounded-md border border-brand-border bg-brand-surface py-6 pl-8 pr-6 shadow-card">
+      <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-3 rounded-full bg-brand-primary" />
+      <p className="text-4xl font-semibold leading-none tracking-normal text-brand-primary">
+        {metric.compactDisplay ?? metric.display ?? "-"}
+      </p>
+      <p className="mt-2 text-xl font-semibold leading-6 text-brand-ink">
+        {metric.label}
+      </p>
+      {sublabel ? (
+        <p className="mt-1 text-base leading-5 text-brand-muted">{sublabel}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function renderSingleChart(
+  chartId: DashboardChartId,
+  d: ReportDashboard,
+): React.ReactElement {
+  switch (chartId) {
+    case "rsu-inscriptions":
+      return (
+        <Panel
+          title={d.charts.rsuInscriptionsMensuelles.title}
+          subtitle={`RSU - ${unitLabel(d.charts.rsuInscriptionsMensuelles.unit)}`}
+          isPrint
+        >
+          <RsuChart
+            points={d.charts.rsuInscriptionsMensuelles.series}
+            trend={d.charts.rsuInscriptionsMensuelles.trend}
+          />
+        </Panel>
+      );
+    case "asd-entrees-sorties":
+      return (
+        <Panel title={d.charts.asdEntreesSorties.title} subtitle="Section 20. ASD - ménages" isPrint>
+          <AsdChart points={d.charts.asdEntreesSorties.series} />
+        </Panel>
+      );
+    case "fms-matrice-risque":
+      return (
+        <Panel title={d.charts.fmsMatriceRisque.title} subtitle="Famille - niveau de risque" isPrint>
+          <FmsMatrixChart rows={d.charts.fmsMatriceRisque.rows} />
+        </Panel>
+      );
+    case "menages-bloques-national":
+      return (
+        <Panel title={d.charts.menagesBloquesNational.title} subtitle="Stock courant par motif" isPrint>
+          <BlockedNationalChart rows={d.charts.menagesBloquesNational.rows} />
+        </Panel>
+      );
+    case "flux-regionaux":
+      return (
+        <Panel title={d.charts.fluxRegionauxAsdAmot.title} subtitle="T1 régions" isPrint>
+          <RegionFluxChart rows={d.charts.fluxRegionauxAsdAmot.rows} />
+        </Panel>
+      );
+    case "menages-bloques-regionaux":
+      return (
+        <Panel title={d.charts.menagesBloquesRegionaux.title} subtitle="Stock courant" isPrint>
+          <RegionBlockedChart rows={d.charts.menagesBloquesRegionaux.rows} />
+        </Panel>
+      );
+  }
 }
 
 function KpiTile({
@@ -365,28 +516,61 @@ function KpiTile({
 }: {
   metric: Metric;
   sublabel?: string;
-  tone?: "green" | "greenSolid" | "red";
+  tone?: "green" | "greenSolid" | "red" | "amber";
 }): React.ReactElement {
   const isSolid = tone === "greenSolid";
-  const accent = tone === "red" ? "border-l-[#D40000]" : "border-l-[#006B35]";
-  const valueColor = tone === "red" ? "text-[#D40000]" : isSolid ? "text-white" : "text-[#006B35]";
+  const valueColor =
+    tone === "red"
+      ? "text-brand-danger"
+      : tone === "amber"
+        ? "text-[#9A6A00]"
+        : isSolid
+          ? "text-white"
+          : "text-brand-ink";
+  const badgeColor =
+    tone === "red"
+      ? "bg-red-50 text-brand-danger"
+      : tone === "amber"
+        ? "bg-amber-50 text-[#9A6A00]"
+        : isSolid
+          ? "bg-white/15 text-white"
+          : "bg-emerald-50 text-brand-primary";
+  const barColor =
+    tone === "red" ? "bg-brand-danger/20" : tone === "amber" ? "bg-amber-200" : "bg-emerald-100";
+  const delta = metric.percentDisplay;
 
   return (
     <div
-      className={`min-h-[62px] border-l-4 ${accent} ${
-        isSolid ? "bg-[#006B35] text-white" : "bg-white text-slate-900"
-      } px-3 py-2 shadow-sm`}
+      className={`min-h-[98px] rounded-lg border ${
+        isSolid
+          ? "border-brand-primary bg-brand-primary text-white shadow-card"
+          : "border-brand-border bg-white"
+      } p-4`}
     >
-      <p className={`text-[21px] font-extrabold leading-6 ${valueColor}`}>
-        {metric.compactDisplay ?? metric.display ?? "-"}
-      </p>
-      <p className={`mt-1 text-[11px] font-semibold leading-3 ${isSolid ? "text-white" : "text-slate-900"}`}>
+      <p className={`text-xs leading-4 ${isSolid ? "text-white/70" : "text-brand-muted"}`}>
         {metric.label}
       </p>
-      {sublabel ? (
-        <p className={`mt-0.5 text-[10px] ${isSolid ? "text-white/80" : "text-slate-500"}`}>
-          {sublabel}
-        </p>
+      <p className={`mt-1 text-2xl font-semibold leading-7 ${valueColor}`}>
+        {metric.compactDisplay ?? metric.display ?? "-"}
+      </p>
+      <div className="mt-2 flex min-h-5 flex-wrap items-center gap-2">
+        {delta ? (
+          <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${badgeColor}`}>
+            {delta}
+          </span>
+        ) : null}
+        {sublabel ? (
+          <span className={`text-[11px] ${isSolid ? "text-white/70" : "text-brand-muted"}`}>
+            {sublabel}
+          </span>
+        ) : null}
+      </div>
+      {!isSolid ? (
+        <div className="mt-3 grid grid-cols-3 gap-1">
+          <span className={`h-1 rounded ${barColor}`} />
+          <span className={`h-1 rounded ${barColor}`} />
+          <span className={`h-1 rounded ${barColor}`} />
+        </div>
       ) : null}
     </div>
   );
@@ -394,14 +578,41 @@ function KpiTile({
 
 function Panel({
   title,
+  subtitle,
+  exportChartId,
+  exportQuery = "",
+  canExport = true,
+  isPrint = false,
   children,
 }: {
   title: string;
+  subtitle?: string;
+  exportChartId?: DashboardChartId;
+  exportQuery?: string;
+  canExport?: boolean;
+  isPrint?: boolean;
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <section className="bg-white p-3 shadow-sm">
-      <h2 className="mb-2 text-[11px] font-bold text-[#102014]">{title}</h2>
+    <section className="rounded-lg border border-brand-border bg-white p-4 print:break-inside-avoid">
+      <div className="mb-3 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold text-brand-ink">{title}</h2>
+          {subtitle ? <p className="mt-1 text-[11px] text-brand-muted">{subtitle}</p> : null}
+        </div>
+        {exportChartId && canExport && !isPrint ? (
+          <a
+            href={`/api/reports/dashboard/charts/${exportChartId}/export.png${exportQuery}`}
+            download={`rsu-dashboard-${exportChartId}.png`}
+            className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-brand-border bg-white px-2 text-[11px] font-medium text-brand-ink hover:bg-brand-bg"
+          >
+            <Download className="h-3 w-3" aria-hidden />
+            PNG
+          </a>
+        ) : !isPrint && canExport ? (
+          <span className="text-base leading-none text-brand-muted">...</span>
+        ) : null}
+      </div>
       {children}
     </section>
   );
@@ -421,22 +632,22 @@ function RsuChart({
   }));
 
   return (
-    <div className="h-[220px]">
+    <div className="h-[260px]">
       <ResponsiveContainer>
         <ComposedChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#475569" }} />
-          <YAxis tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="value" name="Inscrits RNP" fill={GREEN_SOFT} barSize={24} />
+          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar dataKey="value" name="Inscrits RNP" fill={GREEN_SOFT} barSize={26} radius={[4, 4, 0, 0]} />
           <Line
             type="monotone"
             dataKey="trend"
             name="Tendance"
-            stroke={GREEN}
+            stroke={GREEN_DARK}
             strokeWidth={2}
-            dot={{ r: 3 }}
+            dot={{ r: 3, fill: GREEN_DARK, strokeWidth: 0 }}
             connectNulls
           />
         </ComposedChart>
@@ -447,17 +658,17 @@ function RsuChart({
 
 function AsdChart({ points }: { points: AsdPoint[] }): React.ReactElement {
   return (
-    <div className="h-[220px]">
+    <div className="h-[260px]">
       <ResponsiveContainer>
         <ComposedChart data={points} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#475569" }} />
-          <YAxis tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="netRaw" name="Delta" fill="#B8C7BD" barSize={18} />
-          <Line type="monotone" dataKey="entrantsRaw" name="Entrées" stroke={GREEN} strokeWidth={2} dot={{ r: 3 }} />
-          <Line type="monotone" dataKey="sortantsRaw" name="Sorties" stroke={RED} strokeWidth={2} dot={{ r: 3 }} />
+          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar dataKey="netRaw" name="Delta" fill="#D6D6D3" barSize={22} radius={[4, 4, 0, 0]} />
+          <Line type="monotone" dataKey="entrantsRaw" name="Entrées" stroke={GREEN} strokeWidth={2} dot={{ r: 3, fill: GREEN, strokeWidth: 0 }} />
+          <Line type="monotone" dataKey="sortantsRaw" name="Sorties" stroke={RED} strokeWidth={2} dot={{ r: 3, fill: RED, strokeWidth: 0 }} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -466,22 +677,54 @@ function AsdChart({ points }: { points: AsdPoint[] }): React.ReactElement {
 
 function FmsMatrixChart({ rows }: { rows: FmsMatrixRow[] }): React.ReactElement {
   const data = rows.map((row) => ({
-    label: `${shorten(row.typeFamille)} ${shortRisk(row.niveauRisque)}`,
+    label: `${row.typeFamille} - ${shortRisk(row.niveauRisque)}`,
     confirme: row.douteConfirmeRaw,
     leve: row.douteLeveRaw,
   }));
+  const height = Math.max(320, data.length * 46);
 
   return (
-    <div className="h-[310px]">
+    <div style={{ height }}>
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 28 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis dataKey="label" interval={0} angle={-90} textAnchor="end" tick={{ fontSize: 9, fill: "#475569" }} height={68} />
-          <YAxis tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
+        <BarChart
+          layout="vertical"
+          data={data}
+          margin={{ top: 8, right: 24, left: 0, bottom: 8 }}
+        >
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 10, fill: GRAY }}
+            tickFormatter={formatCompactAxis}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="label"
+            width={168}
+            tick={{ fontSize: 10, fill: GRAY }}
+            axisLine={false}
+            tickLine={false}
+          />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="confirme" stackId="fms" name="Doute confirmé" fill={RED} />
-          <Bar dataKey="leve" stackId="fms" name="Doute levé" fill={GREEN} />
+          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar
+            dataKey="confirme"
+            stackId="fms"
+            name="Doute confirmé"
+            fill={RED}
+            barSize={16}
+            radius={[0, 0, 0, 0]}
+          />
+          <Bar
+            dataKey="leve"
+            stackId="fms"
+            name="Doute levé"
+            fill={GREEN}
+            barSize={16}
+            radius={[0, 4, 4, 0]}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -490,18 +733,18 @@ function FmsMatrixChart({ rows }: { rows: FmsMatrixRow[] }): React.ReactElement 
 
 function BlockedNationalChart({ rows }: { rows: BlockedNationalRow[] }): React.ReactElement {
   return (
-    <div className="h-[310px]">
+    <div className="h-[330px]">
       <ResponsiveContainer>
         <BarChart data={rows} margin={{ top: 18, right: 12, left: 0, bottom: 12 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis dataKey="motifBlocage" tick={{ fontSize: 10, fill: "#475569" }} />
-          <YAxis tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <XAxis dataKey="motifBlocage" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
           <Bar dataKey="menagesRaw" name="Ménages bloqués" barSize={42}>
             {rows.map((row, index) => (
               <Cell key={row.motifBlocage} fill={index === rows.length - 1 ? RED : index === 1 ? GREEN_SOFT : GREEN} />
             ))}
-            <LabelList dataKey="menagesDisplay" position="top" fontSize={11} fill="#111827" />
+            <LabelList dataKey="menagesDisplay" position="top" fontSize={11} fill="#14140F" />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -512,20 +755,20 @@ function BlockedNationalChart({ rows }: { rows: BlockedNationalRow[] }): React.R
 function RegionFluxChart({ rows }: { rows: RegionFluxRow[] }): React.ReactElement {
   const data = rows.filter((row) => row.entrantsRaw || row.sortantsRaw);
   return (
-    <div className="h-[300px]">
+    <div className="h-[320px]">
       <ResponsiveContainer>
         <BarChart
           layout="vertical"
           data={data}
           margin={{ top: 8, right: 18, left: 0, bottom: 8 }}
         >
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis type="number" tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
-          <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: "#475569" }} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="entrantsRaw" name="Entrants" fill={GREEN} barSize={8} />
-          <Bar dataKey="sortantsRaw" name="Sortants" fill={RED} barSize={8} />
+          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar dataKey="entrantsRaw" name="Entrants" fill={GREEN} barSize={8} radius={[0, 4, 4, 0]} />
+          <Bar dataKey="sortantsRaw" name="Sortants" fill={RED} barSize={8} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -537,19 +780,19 @@ function RegionBlockedChart({ rows }: { rows: RegionBlockedRow[] }): React.React
     .filter((row) => row.menagesRaw > 0)
     .sort((a, b) => b.menagesRaw - a.menagesRaw);
   return (
-    <div className="h-[300px]">
+    <div className="h-[320px]">
       <ResponsiveContainer>
         <BarChart
           layout="vertical"
           data={data}
           margin={{ top: 8, right: 28, left: 0, bottom: 8 }}
         >
-          <CartesianGrid stroke={GRID} strokeDasharray="2 3" />
-          <XAxis type="number" tick={{ fontSize: 10, fill: "#475569" }} tickFormatter={formatCompactAxis} />
-          <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: "#475569" }} />
+          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Bar dataKey="menagesRaw" name="Bloqués" fill={RED_DARK} barSize={10}>
-            <LabelList dataKey="menagesDisplay" position="right" fontSize={10} fill="#111827" />
+          <Bar dataKey="menagesRaw" name="Bloqués" fill={RED_DARK} barSize={10} radius={[0, 4, 4, 0]}>
+            <LabelList dataKey="menagesDisplay" position="right" fontSize={10} fill="#14140F" />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -567,23 +810,23 @@ function CompactTable({
   headerColor?: "green" | "gray";
 }): React.ReactElement {
   return (
-    <div className="mt-2 overflow-hidden border border-[#D9E0DC]">
+    <div className="mt-3 overflow-hidden rounded-lg border border-brand-border">
       <table className="w-full table-fixed text-[10px]">
-        <thead className={headerColor === "green" ? "bg-[#006B35] text-white" : "bg-[#F2F4F3] text-[#214331]"}>
+        <thead className={headerColor === "green" ? "bg-brand-primary text-white" : "bg-brand-bg text-brand-soft"}>
           <tr>
             {columns.map(([label]) => (
-              <th key={label} className="px-2 py-1 text-left font-bold">
+              <th key={label} className="px-3 py-2 text-left font-semibold uppercase tracking-[0.04em]">
                 {label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E4E8E5] bg-white">
+        <tbody className="divide-y divide-brand-border bg-white">
           {rows.length ? (
             rows.map((row, index) => (
               <tr key={index}>
                 {columns.map(([label, key]) => (
-                  <td key={`${label}-${key}`} className="px-2 py-1 text-slate-700">
+                  <td key={`${label}-${key}`} className="px-3 py-2 text-brand-soft">
                     {formatCell(row[key])}
                   </td>
                 ))}
@@ -591,7 +834,7 @@ function CompactTable({
             ))
           ) : (
             <tr>
-              <td className="px-2 py-2 text-slate-500" colSpan={columns.length}>
+              <td className="px-3 py-3 text-brand-muted" colSpan={columns.length}>
                 Aucune donnée
               </td>
             </tr>
@@ -609,6 +852,37 @@ function metricFromBlock(
   const value = block[key];
   if (isMetric(value)) return value;
   return { label: key, display: "-" };
+}
+
+function emptyMetric(label: string): Metric {
+  return { label, display: "-" };
+}
+
+function personSublabel(metric?: Metric): string | undefined {
+  if (metric?.raw == null || metric.raw <= 0) return undefined;
+  const display = metric?.compactDisplay ?? metric?.display;
+  if (!display || display === "-") return undefined;
+  return `${display} personnes`;
+}
+
+function registrationPersonSublabel(prefix: string, metric?: Metric): string {
+  if (metric?.raw == null || metric.raw <= 0) return prefix;
+  const display = metric?.compactDisplay ?? metric?.display;
+  if (!display || display === "-") return prefix;
+  return `${prefix} · ${display} pers.`;
+}
+
+function unitLabel(unit?: string): string {
+  return String(unit || "MENAGES").toUpperCase() === "PERSONNES" ? "personnes" : "ménages";
+}
+
+function dashboardDateQuery(dashboard: ReportDashboard): string {
+  const params = new URLSearchParams();
+  const range = dashboard.meta.dateRange;
+  if (range?.startDate) params.set("startDate", range.startDate);
+  if (range?.endDate) params.set("endDate", range.endDate);
+  const query = params.toString();
+  return query ? `?${query}` : "";
 }
 
 function isMetric(value: unknown): value is Metric {
@@ -639,14 +913,6 @@ function formatDate(value: string): string {
     month: "long",
     year: "numeric",
   });
-}
-
-function shorten(value: string): string {
-  return value
-    .replace("Ménage ", "")
-    .replace("Cas ", "")
-    .replace(" artificiel ou éclaté", "")
-    .slice(0, 18);
 }
 
 function shortRisk(value: string): string {

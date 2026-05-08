@@ -2,7 +2,15 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ReportJobCreateResponse = {
@@ -35,6 +43,25 @@ type ValidationResult = {
     code: string;
     message: string;
   }[];
+};
+
+type SelectedFile = {
+  name: string;
+  size: number;
+  lastModified: number;
+};
+
+type UploadSuccess = {
+  fileName: string;
+  jobId: string;
+  warnings: number;
+};
+
+type UploadConflict = {
+  kind: "duplicate" | "overlap";
+  idChargement: string | null;
+  message: string;
+  confirming: boolean;
 };
 
 class DuplicateUploadError extends Error {
@@ -115,6 +142,10 @@ function isMessageDetail(detail: unknown): detail is { message: string } {
   );
 }
 
+function isOverlapError(message: string | null | undefined): boolean {
+  return Boolean(message?.toLowerCase().includes("chevauchante"));
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -122,13 +153,12 @@ function delay(ms: number): Promise<void> {
 export function UploadDrawer(): React.ReactElement {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [reportStatus, setReportStatus] =
     useState<ReportJobStatusResponse | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
-  const [duplicate, setDuplicate] = useState<{
-    idChargement: string | null;
-    message: string;
-  } | null>(null);
+  const [success, setSuccess] = useState<UploadSuccess | null>(null);
+  const [conflict, setConflict] = useState<UploadConflict | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -138,27 +168,79 @@ export function UploadDrawer(): React.ReactElement {
     await submitSelectedFile(false);
   }
 
+  function onFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0] ?? null;
+    setSelectedFile(
+      file
+        ? {
+            name: file.name,
+            size: file.size,
+            lastModified: file.lastModified,
+          }
+        : null,
+    );
+    setError(null);
+    setValidation(null);
+    setConflict(null);
+    setSuccess(null);
+    setReportStatus(null);
+  }
+
+  function clearSelectedFile(): void {
+    if (inputRef.current) inputRef.current.value = "";
+    setSelectedFile(null);
+    setError(null);
+    setValidation(null);
+    setConflict(null);
+    setSuccess(null);
+    setReportStatus(null);
+  }
+
   async function submitSelectedFile(replace: boolean): Promise<void> {
     setError(null);
     setValidation(null);
-    setDuplicate(null);
+    setConflict(null);
+    setSuccess(null);
 
     const file = inputRef.current?.files?.[0];
-    if (!file || file.size === 0) return;
+    if (!file || file.size === 0) {
+      setError("Sélectionnez un fichier Excel .xlsx avant d'envoyer.");
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      setError("Format invalide: le fichier doit être un .xlsx.");
+      return;
+    }
     setSubmitting(true);
     try {
       const job = await uploadReportAction(file, replace);
       let latest = await getReportStatus(job.jobId);
-      setReportStatus(latest);
       for (let attempt = 0; attempt < 120; attempt += 1) {
+        setReportStatus(latest);
         if (latest.status === "succeeded") {
-          router.push("/dashboard/macro-national");
+          const validationResult = await getValidation(job.jobId);
+          setValidation(validationResult);
+          setSuccess({
+            fileName: file.name,
+            jobId: job.jobId,
+            warnings: validationResult?.summary.warnings ?? 0,
+          });
           router.refresh();
           return;
         }
         if (latest.status === "failed") {
           setValidation(await getValidation(job.jobId));
-          setError(latest.errorSummary ?? "Le traitement du rapport a échoué.");
+          const summary = latest.errorSummary ?? "Le traitement du rapport a échoué.";
+          if (isOverlapError(summary)) {
+            setConflict({
+              kind: "overlap",
+              idChargement: null,
+              message: summary,
+              confirming: false,
+            });
+          } else {
+            setError(summary);
+          }
           return;
         }
         await delay(1000);
@@ -168,9 +250,11 @@ export function UploadDrawer(): React.ReactElement {
       setError("Le traitement prend plus de temps que prévu. Réessayez dans quelques instants.");
     } catch (err) {
       if (err instanceof DuplicateUploadError) {
-        setDuplicate({
+        setConflict({
+          kind: "duplicate",
           idChargement: err.idChargement,
           message: err.message,
+          confirming: false,
         });
       } else {
         setError(err instanceof Error ? err.message : "Upload impossible.");
@@ -182,103 +266,262 @@ export function UploadDrawer(): React.ReactElement {
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
-        Charger des données
+      <Button
+        type="button"
+        size="sm"
+        className="h-8 gap-2 px-3 text-xs"
+        onClick={() => setOpen(true)}
+      >
+        <Upload className="h-3.5 w-3.5" aria-hidden />
+        Charger
       </Button>
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
-          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/35 p-4"
+          onClick={() => {
+            if (!submitting) setOpen(false);
+          }}
         >
           <aside
-            className="flex h-full w-full max-w-md flex-col bg-brand-surface shadow-xl"
+            className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-[0_24px_80px_rgba(20,20,15,0.22)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <header className="flex items-center justify-between border-b border-brand-border px-6 py-4">
-              <h2 className="text-base font-semibold text-brand-dark">
-                Chargement des données
-              </h2>
-              <button
-                type="button"
-                className="text-brand-muted hover:text-slate-900"
-                onClick={() => setOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <header className="flex items-center justify-between gap-4 border-b border-brand-border px-6 py-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                  Nouveau chargement
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-brand-ink">
+                  Chargement des données
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/api/reports/template.xlsx"
+                  className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-brand-border bg-white px-3 text-xs font-medium text-brand-ink hover:bg-brand-bg"
+                >
+                  <Download className="h-3.5 w-3.5" aria-hidden />
+                  Modèle Excel
+                </a>
+                <button
+                  type="button"
+                  className="rounded-md p-1 text-brand-muted hover:bg-brand-bg hover:text-brand-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={submitting}
+                  onClick={() => setOpen(false)}
+                  aria-label="Fermer"
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
             </header>
             <form
               onSubmit={onSubmit}
               className="flex flex-1 flex-col gap-4 overflow-auto p-6"
             >
               <p className="text-sm text-brand-muted">
-                Chargez le classeur hebdomadaire RSU complet. Le serveur crée
-                un job, puis le worker valide le fichier et alimente les faits
-                cumulés utilisés par le dashboard.
+                Chargez le classeur quotidien RSU complet. Le serveur valide le
+                fichier, alimente les faits cumulés, puis rafraîchit le
+                dashboard.
               </p>
 
-              <input
-                ref={inputRef}
-                type="file"
-                name="file"
-                accept=".xlsx"
-                className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-brand-dark"
-              />
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-brand-border-strong bg-brand-bg px-6 py-8 text-center transition hover:border-brand-primary hover:bg-white">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-brand-primary">
+                  <FileSpreadsheet className="h-6 w-6" aria-hidden />
+                </span>
+                <span className="mt-3 text-sm font-semibold text-brand-ink">
+                  {selectedFile
+                    ? "Changer de fichier Excel"
+                    : "Sélectionner un classeur Excel"}
+                </span>
+                <span className="mt-1 text-xs text-brand-muted">
+                  Format attendu: .xlsx
+                </span>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  name="file"
+                  accept=".xlsx"
+                  disabled={submitting}
+                  onChange={onFileChange}
+                  className="sr-only"
+                />
+              </label>
 
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Traitement..." : "Envoyer"}
+              {selectedFile ? (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-border bg-white p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-brand-primary">
+                      <FileSpreadsheet className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-brand-ink">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-brand-muted">
+                        {formatBytes(selectedFile.size)} · modifié le{" "}
+                        {formatDateTime(selectedFile.lastModified)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-brand-muted hover:bg-brand-bg hover:text-brand-ink disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={submitting}
+                    onClick={clearSelectedFile}
+                  >
+                    Retirer
+                  </button>
+                </div>
+              ) : null}
+
+              <Button
+                type="submit"
+                className="gap-2"
+                disabled={submitting || !selectedFile}
+              >
+                <Upload className="h-4 w-4" aria-hidden />
+                {submitting ? "Traitement..." : "Envoyer le fichier"}
               </Button>
 
-              {duplicate ? (
-                <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+              {success ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-primary" aria-hidden />
+                    <div>
+                      <p className="font-semibold">
+                        Fichier chargé et dashboard mis à jour
+                      </p>
+                      <p className="mt-1 text-xs text-emerald-900">
+                        {success.fileName} · job {success.jobId}
+                        {success.warnings > 0
+                          ? ` · ${success.warnings} avertissement(s)`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {conflict ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900">
                   <p className="font-medium">
-                    {duplicate.idChargement
-                      ? `id_chargement ${duplicate.idChargement} existe déjà`
-                      : "Ce chargement existe déjà"}
+                    {conflict.kind === "overlap"
+                      ? "Période déjà couverte par des données actives"
+                      : conflict.idChargement
+                        ? `id_chargement ${conflict.idChargement} existe déjà`
+                        : "Ce chargement existe déjà"}
                   </p>
-                  <p className="mt-1">{duplicate.message}</p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="mt-3"
-                    disabled={submitting}
-                    onClick={() => void submitSelectedFile(true)}
-                  >
-                    Remplacer la version active
-                  </Button>
+                  <p className="mt-1">{conflict.message}</p>
+                  {conflict.confirming ? (
+                    <div className="mt-3 rounded-md border border-amber-300 bg-white p-3">
+                      <p className="font-semibold text-amber-950">
+                        Confirmer le remplacement des données actives ?
+                      </p>
+                      <p className="mt-1">
+                        Les lots actifs qui chevauchent cette période seront
+                        désactivés et remplacés par ce fichier.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={submitting}
+                          onClick={() => void submitSelectedFile(true)}
+                        >
+                          Confirmer le remplacement
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={submitting}
+                          onClick={() =>
+                            setConflict({ ...conflict, confirming: false })
+                          }
+                        >
+                          Annuler
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3"
+                      disabled={submitting}
+                      onClick={() =>
+                        setConflict({ ...conflict, confirming: true })
+                      }
+                    >
+                      Remplacer les données actives
+                    </Button>
+                  )}
                 </div>
               ) : null}
 
               {reportStatus ? (
-                <div className="rounded-md border border-brand-border p-3 text-xs text-slate-700">
-                  <p className="font-medium text-brand-dark">
-                    Job {reportStatus.jobId}
-                  </p>
-                  <p className="mt-1">
-                    Statut: {reportStatus.status} ({reportStatus.progress}%)
-                  </p>
+                <div className="rounded-lg border border-brand-border bg-white p-4 text-xs text-brand-soft">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-brand-ink">
+                        {statusLabel(reportStatus.status)}
+                      </p>
+                      <p className="mt-1">
+                        Job {reportStatus.jobId} · {reportStatus.progress}%
+                      </p>
+                    </div>
+                    {reportStatus.status === "succeeded" ? (
+                      <CheckCircle2 className="h-5 w-5 text-brand-primary" aria-hidden />
+                    ) : reportStatus.status === "failed" ? (
+                      <AlertTriangle className="h-5 w-5 text-brand-danger" aria-hidden />
+                    ) : (
+                      <Loader2 className="h-5 w-5 animate-spin text-brand-primary" aria-hidden />
+                    )}
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-brand-bg">
+                    <div
+                      className="h-full rounded-full bg-brand-primary transition-all"
+                      style={{
+                        width: `${Math.max(0, Math.min(100, reportStatus.progress))}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               ) : null}
 
               {error ? (
-                <div className="rounded-md bg-red-50 px-3 py-2 text-xs text-brand-danger">
+                <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-brand-danger">
                   {error}
                 </div>
               ) : null}
 
               {validation ? (
-                <div className="rounded-md border border-brand-border p-3 text-xs">
-                  <p className="font-medium text-brand-danger">
-                    Validation: {validation.summary.errors} erreurs,{" "}
-                    {validation.summary.warnings} avertissements
+                <div className="rounded-lg border border-brand-border bg-white p-4 text-xs">
+                  <p
+                    className={
+                      validation.summary.errors > 0
+                        ? "font-semibold text-brand-danger"
+                        : "font-semibold text-brand-ink"
+                    }
+                  >
+                    Validation: {validation.summary.errors} erreur(s),{" "}
+                    {validation.summary.warnings} avertissement(s)
                   </p>
-                  <ul className="mt-2 max-h-40 space-y-1 overflow-auto text-slate-700">
-                    {validation.messages.slice(0, 8).map((message, index) => (
-                      <li key={`${message.code}-${index}`}>
-                        {message.sheet ? `${message.sheet}: ` : ""}
-                        {message.message}
-                      </li>
-                    ))}
-                  </ul>
+                  {validation.messages.length ? (
+                    <ul className="mt-2 max-h-40 space-y-1 overflow-auto text-slate-700">
+                      {validation.messages.slice(0, 8).map((message, index) => (
+                        <li key={`${message.code}-${index}`}>
+                          {message.sheet ? `${message.sheet}: ` : ""}
+                          {message.row ? `ligne ${message.row}: ` : ""}
+                          {message.message}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1 text-brand-muted">
+                      Aucun problème de validation détecté.
+                    </p>
+                  )}
                 </div>
               ) : null}
 
@@ -288,4 +531,33 @@ export function UploadDrawer(): React.ReactElement {
       ) : null}
     </>
   );
+}
+
+function statusLabel(status: ReportJobStatusResponse["status"]): string {
+  switch (status) {
+    case "queued":
+      return "En attente de traitement";
+    case "running":
+      return "Validation et ingestion en cours";
+    case "succeeded":
+      return "Traitement terminé";
+    case "failed":
+      return "Traitement échoué";
+  }
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} o`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} Ko`;
+  return `${(value / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function formatDateTime(value: number): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }

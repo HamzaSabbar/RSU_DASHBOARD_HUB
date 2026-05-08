@@ -7,6 +7,34 @@
   body {
     font-family: Inter, ui-sans-serif, system-ui, sans-serif;
     background-color: theme("colors.brand.bg");
-    color: theme("colors.slate.900");
+    color: theme("colors.brand.ink");
+  }
+}
+
+@layer utilities {
+  .rsu-dot-bg {
+    background-color: #fbfaf6;
+    background-image: radial-gradient(#e3e3df 0.7px, transparent 0.7px);
+    background-size: 18px 18px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm 8mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  .recharts-responsive-container {
+    min-height: inherit;
   }
 }

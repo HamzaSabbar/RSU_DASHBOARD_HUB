@@ -15,7 +15,7 @@ from sqlalchemy import select
 from config import settings
 from db.models import ReportJob, ReportUploadBatch
 from db.session import SessionLocal, engine
-from reports import calculations, facts, parser, service
+from reports import calculations, facts, parser, service, template
 from reports.repository import LocalJsonReportJobRepository, ReportJobRecord
 from reports.storage import LocalObjectStorage, get_storage
 
@@ -662,6 +662,8 @@ def test_successful_workbook_validation_and_dashboard() -> None:
     assert dashboard["meta"]["idChargement"] == "LOAD-001"
     assert dashboard["cards"]["inscriptions"]["rnpPersonnesTotal"]["raw"] == 460
     assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 190
+    assert dashboard["cards"]["inscriptions"]["rsuPersonnesCouvertes"]["raw"] == 11_000_000
+    assert "rsuPersonnesTotal" not in dashboard["cards"]["inscriptions"]
     assert dashboard["cards"]["traitementFms"]["demandesTraitees"]["raw"] == 130
     assert dashboard["cards"]["radiationFraude"]["savingAnnualRaw"] == 69_600
     assert dashboard["cards"]["rescoring"]["savingAnnualRaw"] == 19_200
@@ -804,6 +806,80 @@ def test_client_data_only_workbook_without_stock_sheets_is_supported() -> None:
     assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 190
     assert dashboard["cards"]["programmesSociaux"]["asdMenagesActifs"]["raw"] == 65
     assert dashboard["cards"]["programmesSociaux"]["amoMenagesActifs"]["raw"] == 38
+    assert "asdPersonnesActives" not in dashboard["cards"]["programmesSociaux"]
+    assert "amoPersonnesActives" not in dashboard["cards"]["programmesSociaux"]
+
+
+def test_daily_client_workbook_uses_event_dates_and_person_columns() -> None:
+    workbook = load_workbook(
+        io.BytesIO(
+            make_split_table_workbook(
+                include_system_sheets=False,
+                include_rsu_annotations=False,
+                minimal_parameters=True,
+                client_data_only=True,
+            )
+        )
+    )
+    daily_values = {
+        "11_RNP_Nouvelles_Inscriptions": [
+            "2026-03-10",
+            "2026-03-11",
+            "2026-04-10",
+            "2026-04-11",
+        ],
+        "12_RSU_Nouvelles_Inscriptions": [
+            "2026-03-10",
+            "2026-03-11",
+            "2026-04-10",
+            "2026-04-11",
+        ],
+        "21_ASD_Flux": ["2026-03-05", "2026-03-06", "2026-04-05", "2026-04-06"],
+        "22_ASD_Rescoring": ["2026-04-07"],
+        "23_ASD_Fraude": ["2026-04-08"],
+        "31_AMO_Tadamon_Flux": [
+            "2026-03-05",
+            "2026-03-06",
+            "2026-04-05",
+            "2026-04-06",
+        ],
+        "32_AMO_Tadamon_Rescoring": ["2026-04-07"],
+        "33_AMO_Tadamon_Fraude": ["2026-04-08"],
+        "40_FMS_Traitement": ["2026-04-20", "2026-04-20"],
+        "41_FMS_Menages_Bloques": ["2026-04-20", "2026-04-20", "2026-04-20"],
+    }
+    for sheet_name, dates in daily_values.items():
+        _replace_period_columns_with_event_date(workbook[sheet_name], dates)
+
+    rsu_sheet = workbook["12_RSU_Nouvelles_Inscriptions"]
+    headers = [cell.value for cell in rsu_sheet[1]]
+    person_col = headers.index("nb_nouvelles_personnes_rsu") + 1
+    for row_index, value in enumerate([150, 90, 210, 120], start=2):
+        rsu_sheet.cell(row_index, person_col).value = value
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    parsed = parser.parse_workbook(buffer.getvalue(), job_id="job-test")
+
+    assert parsed.validation.summary.errors == 0
+    first_rnp = parsed.normalized["rsu_new_registrations"][0]
+    assert first_rnp["debut_periode"] == "2026-03-10"
+    assert first_rnp["fin_periode"] == "2026-03-10"
+    assert first_rnp["date_evenement"] == "2026-03-10"
+    rsu_person_rows = [
+        row
+        for row in parsed.normalized["rsu_household_registrations"]
+        if row["code_registre"] == "RSU" and row["type_unite"] == "PERSONNES"
+    ]
+    assert sum(row["nb_nouvelles_inscriptions"] for row in rsu_person_rows) == 570
+
+    dashboard = calculations.build_dashboard(
+        parsed.normalized,
+        job_id="job-test",
+        validation=parsed.validation,
+    )
+    assert dashboard["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 190
+    assert dashboard["cards"]["inscriptions"]["rsuPersonnesCouvertes"]["raw"] == 570
 
 
 def test_missing_sheet_validation_message_is_french() -> None:
@@ -876,6 +952,42 @@ def test_client_template_reference_headers_are_supported() -> None:
     assert parsed.validation.summary.errors == 0
 
 
+def test_excel_template_contains_required_sheets_and_headers() -> None:
+    wb = load_workbook(io.BytesIO(template.build_excel_template()))
+    expected = {
+        "00_Guide",
+        "01_Parametres",
+        "11_RNP_Nouvelles_Inscriptions",
+        "12_RSU_Nouvelles_Inscriptions",
+        "21_ASD_Flux",
+        "22_ASD_Rescoring",
+        "23_ASD_Fraude",
+        "31_AMO_Tadamon_Flux",
+        "32_AMO_Tadamon_Rescoring",
+        "33_AMO_Tadamon_Fraude",
+        "40_FMS_Traitement",
+        "41_FMS_Menages_Bloques",
+    }
+    assert set(wb.sheetnames) == expected
+    assert [cell.value for cell in wb["01_Parametres"][1]][:2] == [
+        "debut_periode",
+        "fin_periode",
+    ]
+    assert "nb_nouvelles_inscriptions" in [
+        cell.value for cell in wb["11_RNP_Nouvelles_Inscriptions"][1]
+    ]
+    assert "type_unite" not in [cell.value for cell in wb["11_RNP_Nouvelles_Inscriptions"][1]]
+    assert wb["01_Parametres"]["A1"].comment is not None
+    assert [cell.value for cell in wb["12_RSU_Nouvelles_Inscriptions"][1]][:5] == [
+        "date_evenement",
+        "nom_region",
+        "nom_province",
+        "nb_nouveaux_menages_rsu",
+        "nb_nouvelles_personnes_rsu",
+    ]
+    assert "nb_entrants_personnes" in [cell.value for cell in wb["21_ASD_Flux"][1]]
+
+
 def _find_header_row(ws: Any, marker: str) -> int:
     for row in ws.iter_rows():
         if any(cell.value == marker for cell in row):
@@ -883,11 +995,29 @@ def _find_header_row(ws: Any, marker: str) -> int:
     raise AssertionError(f"header {marker!r} not found")
 
 
+def _replace_period_columns_with_event_date(ws: Any, dates: list[str]) -> None:
+    headers = [cell.value for cell in ws[1]]
+    if "debut_periode" in headers:
+        ws.cell(1, headers.index("debut_periode") + 1).value = "date_evenement"
+    elif "date_evenement" not in headers:
+        ws.insert_cols(1)
+        ws.cell(1, 1).value = "date_evenement"
+
+    headers = [cell.value for cell in ws[1]]
+    if "fin_periode" in headers:
+        ws.delete_cols(headers.index("fin_periode") + 1)
+
+    headers = [cell.value for cell in ws[1]]
+    date_col = headers.index("date_evenement") + 1
+    for row_index, value in enumerate(dates, start=2):
+        ws.cell(row_index, date_col).value = value
+
+
 def test_rsu_monthly_evolution_and_linear_trend() -> None:
     dashboard = _dashboard_from_workbook(make_report_workbook())
     values = dashboard["charts"]["rsuInscriptionsMensuelles"]["series"]
-    assert [point["raw"] for point in values] == [180, 280]
-    assert dashboard["tables"]["rsuEvolution"][1]["deltaRaw"] == 100
+    assert [point["raw"] for point in values] == [80, 110]
+    assert dashboard["tables"]["rsuEvolution"][1]["deltaRaw"] == 30
     assert calculations.linear_regression_trend([10, 20, 30]) == [10.0, 20.0, 30.0]
 
 
@@ -955,6 +1085,20 @@ async def test_cumulative_fact_dashboard_filters_by_date_range() -> None:
             assert april_asd["entrantsRaw"] == 80
             assert april_asd["sortantsRaw"] == 30
 
+            april_day = await facts.build_dashboard_for_range(
+                session,
+                start_date=date(2026, 4, 5),
+                end_date=date(2026, 4, 5),
+            )
+            april_day_asd = next(
+                row for row in april_day["tables"]["asdEvolution"] if row["month"] == "2026-04"
+            )
+            assert april_day["meta"]["dateRange"] == {
+                "startDate": "2026-04-05",
+                "endDate": "2026-04-05",
+            }
+            assert april_day_asd["entrantsRaw"] == 50
+
             april_may = await facts.build_dashboard_for_range(
                 session,
                 start_date=date(2026, 4, 1),
@@ -963,6 +1107,35 @@ async def test_cumulative_fact_dashboard_filters_by_date_range() -> None:
             assert april_may["cards"]["inscriptions"]["rsuMenagesTotal"]["raw"] == 220
             rsu_series = april_may["charts"]["rsuInscriptionsMensuelles"]["series"]
             assert [point["month"] for point in rsu_series] == ["2026-04", "2026-05"]
+        finally:
+            await tx.rollback()
+            await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_cumulative_fact_dashboard_rejects_reversed_date_range() -> None:
+    async with SessionLocal() as session:
+        tx = await session.begin()
+        try:
+            parsed = parser.parse_workbook(make_report_workbook(id_chargement="LOAD-REVERSED"))
+            assert parsed.validation.summary.errors == 0
+
+            record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-REVERSED")
+            await _add_job_row(session, record)
+            await facts.ingest_report_batch(
+                session,
+                record=record,
+                normalized=parsed.normalized,
+            )
+
+            with pytest.raises(HTTPException) as exc_info:
+                await facts.build_dashboard_for_range(
+                    session,
+                    start_date=date(2026, 5, 1),
+                    end_date=date(2026, 4, 30),
+                )
+
+            assert exc_info.value.status_code == 400
         finally:
             await tx.rollback()
             await engine.dispose()
@@ -1104,6 +1277,46 @@ async def test_overlapping_period_upload_is_rejected() -> None:
                     record=overlap_record,
                     normalized=overlap.normalized,
                 )
+        finally:
+            await tx.rollback()
+            await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_overlapping_period_replace_supersedes_active_batches() -> None:
+    async with SessionLocal() as session:
+        tx = await session.begin()
+        try:
+            original = parser.parse_workbook(make_report_workbook(id_chargement="LOAD-OVERLAP-A"))
+            overlap = parser.parse_workbook(make_report_workbook(id_chargement="LOAD-OVERLAP-B"))
+            assert original.validation.summary.errors == 0
+            assert overlap.validation.summary.errors == 0
+            overlap.normalized["metadata"]["debut_periode"] = "2026-04-15"
+            overlap.normalized["metadata"]["fin_periode"] = "2026-05-15"
+
+            original_record = _job_record(str(uuid.uuid4()), id_chargement="LOAD-OVERLAP-A")
+            overlap_record = _job_record(
+                str(uuid.uuid4()),
+                id_chargement="LOAD-OVERLAP-B",
+                replace=True,
+            )
+            await _add_job_row(session, original_record)
+            await _add_job_row(session, overlap_record)
+            old_batch = await facts.ingest_report_batch(
+                session,
+                record=original_record,
+                normalized=original.normalized,
+            )
+            new_batch = await facts.ingest_report_batch(
+                session,
+                record=overlap_record,
+                normalized=overlap.normalized,
+            )
+
+            assert old_batch.is_active is False
+            assert old_batch.status == "superseded"
+            assert old_batch.superseded_by_batch_id == new_batch.id
+            assert new_batch.is_active is True
         finally:
             await tx.rollback()
             await engine.dispose()

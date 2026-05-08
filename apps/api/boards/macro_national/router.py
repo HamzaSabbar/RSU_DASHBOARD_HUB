@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.deps import get_current_user
+from auth.deps import get_current_report_manager, get_current_user
 from boards.macro_national import service
 from boards.macro_national.schemas import MacroNationalPayload
 from db.models import User
@@ -40,7 +40,7 @@ async def get_data(
 @router.post("/upload", response_model=UploadSummary)
 async def upload(
     files: list[UploadFile],
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> UploadSummary:
     accepted: list[UploadResult] = []

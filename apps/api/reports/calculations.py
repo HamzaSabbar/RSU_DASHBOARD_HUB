@@ -65,6 +65,25 @@ def build_dashboard(
     fraud = _fraud_summary(normalized, reference_date)
     rescoring = _rescoring_summary(normalized, reference_date)
     budget_total = fraud["savingAnnualRaw"] + rescoring["savingAnnualRaw"]
+    asd_personnes_total = _program_active_total(
+        normalized.get("asd_flow", []),
+        normalized.get("asd_stock", []),
+        reference_date,
+        type_unite="PERSONNES",
+    )
+    rsu_personnes_total = _registration_total(
+        normalized,
+        code_registre="RSU",
+        type_unite="PERSONNES",
+        fallback_stock_field="total_cumule",
+        reference_date=reference_date,
+    )
+    amo_personnes_total = _program_active_total(
+        normalized.get("amo_flow", []),
+        normalized.get("amo_stock", []),
+        reference_date,
+        type_unite="PERSONNES",
+    )
 
     dashboard = {
         "meta": {
@@ -95,10 +114,10 @@ def build_dashboard(
             "regionOrder": [region["code_region"] for region in regions],
         },
         "cards": {
-            "inscriptions": {
+            "inscriptions": _without_empty_metrics({
                 "title": "Chiffres clés des inscriptions",
                 "rnpPersonnesTotal": _metric(
-                    "RNP - personnes cumulées",
+                    "Personnes inscrites",
                     _registration_total(
                         normalized,
                         code_registre="RNP",
@@ -109,7 +128,7 @@ def build_dashboard(
                     color="green",
                 ),
                 "rsuMenagesTotal": _metric(
-                    "RSU - ménages cumulés",
+                    "Ménages inscrits",
                     _registration_total(
                         normalized,
                         code_registre="RSU",
@@ -119,19 +138,13 @@ def build_dashboard(
                     ),
                     color="green",
                 ),
-                "rsuPersonnesTotal": _metric(
-                    "RSU - personnes",
-                    _latest_stock_value(
-                        normalized.get("rsu_stock", []),
-                        "total_cumule",
-                        reference_date,
-                        code_registre="RSU",
-                        type_unite="PERSONNES",
-                    ),
+                "rsuPersonnesCouvertes": _optional_positive_metric(
+                    "Personnes couvertes RSU",
+                    rsu_personnes_total,
                     color="green",
                 ),
                 "nouvellesInscriptionsMois": _metric(
-                    "Nouvelles inscriptions RNP",
+                    "Nouvelles inscriptions RSU",
                     rsu_monthly.get(current_month, 0),
                     color="green",
                 ),
@@ -140,11 +153,11 @@ def build_dashboard(
                     rsu_monthly.get(current_month, 0) - rsu_monthly.get(previous_month, 0),
                     rsu_monthly.get(previous_month, 0),
                 ),
-            },
-            "programmesSociaux": {
+            }),
+            "programmesSociaux": _without_empty_metrics({
                 "title": "Programmes sociaux",
                 "asdMenagesActifs": _metric(
-                    "ASD - ménages net cumulés",
+                    "Ménages ASD",
                     _program_active_total(
                         normalized.get("asd_flow", []),
                         normalized.get("asd_stock", []),
@@ -153,18 +166,13 @@ def build_dashboard(
                     ),
                     color="green",
                 ),
-                "asdPersonnesActives": _metric(
+                "asdPersonnesActives": _optional_positive_metric(
                     "ASD - personnes net cumulées",
-                    _program_active_total(
-                        normalized.get("asd_flow", []),
-                        normalized.get("asd_stock", []),
-                        reference_date,
-                        type_unite="PERSONNES",
-                    ),
+                    asd_personnes_total,
                     color="green",
                 ),
                 "amoMenagesActifs": _metric(
-                    "AMO Tadamon - ménages net cumulés",
+                    "Ménages AMO Tadamon",
                     _program_active_total(
                         normalized.get("amo_flow", []),
                         normalized.get("amo_stock", []),
@@ -173,17 +181,12 @@ def build_dashboard(
                     ),
                     color="green",
                 ),
-                "amoPersonnesActives": _metric(
+                "amoPersonnesActives": _optional_positive_metric(
                     "AMO Tadamon - personnes net cumulées",
-                    _program_active_total(
-                        normalized.get("amo_flow", []),
-                        normalized.get("amo_stock", []),
-                        reference_date,
-                        type_unite="PERSONNES",
-                    ),
+                    amo_personnes_total,
                     color="green",
                 ),
-            },
+            }),
             "traitementFms": {
                 "title": "Traitement FMS",
                 "demandesInjectees": _metric("Demandes injectées", fms_totals["injected"]),
@@ -218,7 +221,7 @@ def build_dashboard(
         },
         "charts": {
             "rsuInscriptionsMensuelles": {
-                "title": "Dynamique des inscriptions au RNP",
+                "title": "Dynamique des inscriptions au RSU",
                 "unit": rsu_graph_unit,
                 "series": [
                     {
@@ -311,6 +314,21 @@ def _metric(label: str, raw: int | float | None, *, color: str = "gray") -> dict
         "compactDisplay": _format_compact(raw),
         "color": color,
     }
+
+
+def _optional_positive_metric(
+    label: str,
+    raw: int | float | None,
+    *,
+    color: str = "gray",
+) -> dict[str, Any] | None:
+    if raw is None or raw <= 0:
+        return None
+    return _metric(label, raw, color=color)
+
+
+def _without_empty_metrics(values: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in values.items() if value is not None}
 
 
 def _money_metric(label: str, raw: int | float, *, color: str = "gray") -> dict[str, Any]:
@@ -453,8 +471,22 @@ def _rsu_graph_unit(normalized: dict[str, Any]) -> str:
         str(row.get("type_unite") or "").upper()
         for row in _registration_rows(normalized)
         if row.get("mois_evenement")
-        and str(row.get("code_registre") or "RNP").upper() == "RNP"
+        and str(row.get("code_registre") or "RNP").upper() == "RSU"
     }
+    if any(
+        str(row.get("code_registre") or "RNP").upper() == "RSU"
+        and row.get("mois_evenement")
+        and int(row.get("nb_nouvelles_personnes_rsu") or 0) > 0
+        for row in _registration_rows(normalized)
+    ):
+        flow_units.add("PERSONNES")
+    if not flow_units:
+        flow_units = {
+            str(row.get("type_unite") or "").upper()
+            for row in _registration_rows(normalized)
+            if row.get("mois_evenement")
+            and str(row.get("code_registre") or "RNP").upper() == "RNP"
+        }
     if configured in flow_units or not flow_units:
         return configured
     for fallback in ("PERSONNES", "MENAGES"):
@@ -472,6 +504,24 @@ def _rsu_monthly_values(
         graph_unit = _rsu_graph_unit(normalized)
     graph_unit = graph_unit.upper()
     monthly: dict[str, int] = defaultdict(int)
+    has_direct_rsu_person_rows = any(
+        str(row.get("code_registre") or "RNP").upper() == "RSU"
+        and str(row.get("type_unite") or "").upper() == "PERSONNES"
+        for row in _registration_rows(normalized)
+    )
+    for row in _registration_rows(normalized):
+        if str(row.get("code_registre") or "RNP").upper() != "RSU":
+            continue
+        month = row.get("mois_evenement")
+        if not month:
+            continue
+        if str(row.get("type_unite") or "").upper() == graph_unit:
+            monthly[str(month)] += int(row.get("nb_nouvelles_inscriptions") or 0)
+        elif graph_unit == "PERSONNES" and not has_direct_rsu_person_rows:
+            monthly[str(month)] += int(row.get("nb_nouvelles_personnes_rsu") or 0)
+    if monthly:
+        return dict(sorted(monthly.items()))
+
     for row in _registration_rows(normalized):
         if str(row.get("code_registre") or "RNP").upper() != "RNP":
             continue
@@ -486,10 +536,18 @@ def _rsu_monthly_values(
     snapshots = [
         row
         for row in normalized.get("rsu_stock", [])
-        if str(row.get("code_registre") or "").upper() == "RNP"
+        if str(row.get("code_registre") or "").upper() == "RSU"
         and str(row.get("type_unite") or "").upper() == graph_unit
         and row.get("date_reference")
     ]
+    if not snapshots:
+        snapshots = [
+            row
+            for row in normalized.get("rsu_stock", [])
+            if str(row.get("code_registre") or "").upper() == "RNP"
+            and str(row.get("type_unite") or "").upper() == graph_unit
+            and row.get("date_reference")
+        ]
     snapshots.sort(key=lambda row: row["date_reference"])
     previous: int | None = None
     for row in snapshots:

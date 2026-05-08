@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.deps import get_current_admin_user, get_current_user
+from auth.deps import get_current_admin_user, get_current_report_manager, get_current_user
 from db.models import (
     AuditLog,
     BoardSnapshot,
@@ -30,7 +30,7 @@ from db.models import (
     User,
 )
 from db.session import get_session
-from reports import service
+from reports import service, template
 from reports.schemas import ReportJobCreateResponse, ReportJobStatusResponse, ValidationResult
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
@@ -60,7 +60,7 @@ async def _count_rows(session: AsyncSession, model: type[Any]) -> int:
 async def create_job(
     file: UploadFile = File(...),
     replace: bool = Query(default=False),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> ReportJobCreateResponse:
     response = await service.create_report_job(
@@ -74,7 +74,7 @@ async def create_job(
 
 @router.get("/latest/status", response_model=ReportJobStatusResponse)
 async def latest_job_status(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> ReportJobStatusResponse:
     repo = service.repository_for_session(session)
@@ -83,7 +83,7 @@ async def latest_job_status(
 
 @router.get("/latest/validation", response_model=ValidationResult)
 async def latest_job_validation(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> ValidationResult:
     repo = service.repository_for_session(session)
@@ -92,7 +92,7 @@ async def latest_job_validation(
 
 @router.get("/latest/dashboard")
 async def latest_job_dashboard(
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
     repo = service.repository_for_session(session)
@@ -121,10 +121,23 @@ async def available_periods(
     return await service.get_available_periods(session)
 
 
+@router.get("/template.xlsx")
+async def excel_template(
+    _user: User = Depends(get_current_report_manager),
+) -> Response:
+    return Response(
+        content=template.build_excel_template(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": 'attachment; filename="rsu-dashboard-template.xlsx"',
+        },
+    )
+
+
 @router.get("/jobs/{job_id}/status", response_model=ReportJobStatusResponse)
 async def job_status(
     job_id: str,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> ReportJobStatusResponse:
     repo = service.repository_for_session(session)
@@ -134,7 +147,7 @@ async def job_status(
 @router.get("/jobs/{job_id}/validation", response_model=ValidationResult)
 async def job_validation(
     job_id: str,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> ValidationResult:
     repo = service.repository_for_session(session)
@@ -144,7 +157,7 @@ async def job_validation(
 @router.get("/jobs/{job_id}/dashboard")
 async def job_dashboard(
     job_id: str,
-    _user: User = Depends(get_current_user),
+    _user: User = Depends(get_current_report_manager),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
     repo = service.repository_for_session(session)

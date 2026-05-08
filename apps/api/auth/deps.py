@@ -52,3 +52,14 @@ async def get_current_admin_user(
             detail="admin role required",
         )
     return user
+
+
+async def get_current_report_manager(
+    user: User = Depends(get_current_user),
+) -> User:
+    if user.role not in {"admin", "editor"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="report manager role required",
+        )
+    return user

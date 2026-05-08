@@ -320,8 +320,17 @@ RSU_FLOW = SectionSpec(
         "systeme_source",
         "commentaires",
     ),
+    aliases={
+        "nb_nouvelles_inscriptions": (
+            "nb_nouvelles_inscriptions_personnes",
+            "nb_nouveaux_personnes",
+            "nb_nouvelles_personnes",
+        ),
+    },
     optional_columns=(
         "id_chargement",
+        "debut_periode",
+        "fin_periode",
         "date_evenement",
         "mois_evenement",
         "nom_region",
@@ -351,6 +360,7 @@ RSU_HOUSEHOLD_FLOW = SectionSpec(
         "code_registre",
         "type_unite",
         "nb_nouvelles_inscriptions",
+        "nb_nouvelles_personnes_rsu",
         "mode_source",
         "systeme_source",
         "commentaires",
@@ -361,15 +371,23 @@ RSU_HOUSEHOLD_FLOW = SectionSpec(
             "nb_nouvelles_inscriptions_rsu",
             "nb_menages_rsu",
         ),
+        "nb_nouvelles_personnes_rsu": (
+            "nb_nouveaux_personnes_rsu",
+            "nb_personnes_rsu",
+            "nb_nouvelles_personnes",
+        ),
     },
     optional_columns=(
         "id_chargement",
+        "debut_periode",
+        "fin_periode",
         "date_evenement",
         "mois_evenement",
         "nom_region",
         "code_region",
         "code_registre",
         "type_unite",
+        "nb_nouvelles_personnes_rsu",
         "mode_source",
         "systeme_source",
         "commentaires",
@@ -454,6 +472,8 @@ PROGRAM_STOCK_OPTIONAL_COLUMNS = (
 )
 PROGRAM_EVENT_OPTIONAL_COLUMNS = (
     "id_chargement",
+    "debut_periode",
+    "fin_periode",
     "date_evenement",
     "mois_evenement",
     "nom_region",
@@ -575,6 +595,8 @@ FMS_TREATMENT = SectionSpec(
     optional_columns=(
         "id_chargement",
         "date_reference",
+        "debut_periode",
+        "fin_periode",
         "date_evenement",
         "mois_evenement",
         "code_perimetre_programme",
@@ -614,6 +636,8 @@ FMS_BLOCKED = SectionSpec(
     optional_columns=(
         "id_chargement",
         "date_reference",
+        "debut_periode",
+        "fin_periode",
         "date_evenement",
         "mois_evenement",
         "nom_region",
@@ -680,6 +704,7 @@ MONTH_FIELDS = {"mois_evenement", "mois_reporting_courant"}
 INTEGER_FIELDS = {
     "total_cumule",
     "nb_nouvelles_inscriptions",
+    "nb_nouvelles_personnes_rsu",
     "nb_actifs",
     "nb_entrants_menages",
     "nb_sortants_menages",
@@ -1000,6 +1025,7 @@ def _normalize(
         messages,
         override_uploaded_region_codes=system_references_added,
     )
+    _expand_rsu_person_registrations(normalized)
     return normalized
 
 
@@ -1117,10 +1143,19 @@ def _derive_system_owned_fields(
         "fms_blocked",
     ):
         for row in normalized.get(key, []):
+            has_explicit_event_date = not _is_blank(row.get("date_evenement"))
             if _is_blank(row.get("debut_periode")):
-                row["debut_periode"] = metadata.get("debut_periode")
+                row["debut_periode"] = (
+                    row.get("date_evenement")
+                    if has_explicit_event_date
+                    else metadata.get("debut_periode")
+                )
             if _is_blank(row.get("fin_periode")):
-                row["fin_periode"] = metadata.get("fin_periode")
+                row["fin_periode"] = (
+                    row.get("date_evenement")
+                    if has_explicit_event_date
+                    else metadata.get("fin_periode")
+                )
             if _is_blank(row.get("date_evenement")):
                 row["date_evenement"] = row.get("fin_periode") or metadata.get("fin_periode")
             if _is_blank(row.get("mois_evenement")):
@@ -1174,6 +1209,22 @@ def _derive_system_owned_fields(
                 messages,
                 override_uploaded_region_codes=override_uploaded_region_codes,
             )
+
+
+def _expand_rsu_person_registrations(normalized: dict[str, Any]) -> None:
+    expanded: list[dict[str, Any]] = []
+    for row in normalized.get("rsu_household_registrations", []):
+        expanded.append(row)
+        person_count = row.get("nb_nouvelles_personnes_rsu")
+        if person_count is None or person_count <= 0:
+            continue
+        if str(row.get("type_unite") or "").upper() != "MENAGES":
+            continue
+        person_row = dict(row)
+        person_row["type_unite"] = "PERSONNES"
+        person_row["nb_nouvelles_inscriptions"] = int(person_count)
+        expanded.append(person_row)
+    normalized["rsu_household_registrations"] = expanded
 
 
 def _derive_geography(

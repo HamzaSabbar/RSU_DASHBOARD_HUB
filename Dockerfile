@@ -42,9 +42,8 @@ EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # -----------------------------------------------------------------------
-FROM node:20-alpine AS web-builder
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS web-builder
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
 COPY apps/web/package.json apps/web/package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 COPY apps/web ./
@@ -52,20 +51,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # -----------------------------------------------------------------------
-FROM node:20-alpine AS web-runner
+FROM mcr.microsoft.com/playwright:v1.59.1-noble AS web-runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
-
 COPY --from=web-builder /app/public ./public
-COPY --from=web-builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=web-builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=web-builder --chown=pwuser:pwuser /app/.next/standalone ./
+COPY --from=web-builder --chown=pwuser:pwuser /app/.next/static ./.next/static
 
-USER nextjs
+USER pwuser
 EXPOSE 3000
 CMD ["node", "server.js"]

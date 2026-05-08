@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { auth } from "@/lib/auth";
+import { canManageReports } from "@/lib/roles";
 import {
   ReportDashboardView,
   type ReportDashboard,
@@ -39,6 +42,10 @@ export default async function ReportDashboardPage({
 }: {
   params: { jobId: string };
 }): Promise<React.ReactElement> {
+  const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (!canManageReports(role)) redirect("/dashboard/macro-national");
+
   const status = await apiFetch<ReportJobStatus>(
     `/api/reports/jobs/${params.jobId}/status`,
   );
