@@ -164,7 +164,7 @@ function normalizePdfError(error: unknown, target?: URL): PdfRenderError {
 }
 
 function printUrl(req: NextRequest, chartId?: DashboardChartId): URL {
-  const base = process.env.PDF_RENDER_BASE_URL ?? req.nextUrl.origin;
+  const base = pdfRenderBaseUrl(req);
   const url = new URL("/dashboard/macro-national/print", base);
   const startDate = req.nextUrl.searchParams.get("startDate");
   const endDate = req.nextUrl.searchParams.get("endDate");
@@ -172,4 +172,17 @@ function printUrl(req: NextRequest, chartId?: DashboardChartId): URL {
   if (endDate) url.searchParams.set("endDate", endDate);
   if (chartId) url.searchParams.set("chartId", chartId);
   return url;
+}
+
+function pdfRenderBaseUrl(req: NextRequest): string {
+  if (process.env.PDF_RENDER_BASE_URL) {
+    return process.env.PDF_RENDER_BASE_URL;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    const port = process.env.PORT ?? "3000";
+    return `http://127.0.0.1:${port}`;
+  }
+
+  return req.nextUrl.origin;
 }
