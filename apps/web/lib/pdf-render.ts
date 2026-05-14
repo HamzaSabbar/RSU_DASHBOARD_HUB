@@ -49,7 +49,7 @@ export async function renderDashboardPdf(
       printBackground: true,
       margin: options.chartId
         ? { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" }
-        : { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
+        : { top: "0", right: "0", bottom: "0", left: "0" },
     });
   } catch (error) {
     throw normalizePdfError(error, target);

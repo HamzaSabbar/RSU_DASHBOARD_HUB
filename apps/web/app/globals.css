@@ -22,12 +22,15 @@
 @media print {
   @page {
     size: A4;
-    margin: 10mm 8mm;
+    margin: 0;
   }
 
   html,
   body {
-    background: #ffffff !important;
+    background: theme("colors.brand.bg") !important;
+    margin: 0 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   a {
@@ -36,5 +39,439 @@
 
   .recharts-responsive-container {
     min-height: inherit;
+  }
+
+  .report-pdf-page {
+    width: 210mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    overflow: hidden;
+    background: #eceeef !important;
+  }
+
+  .report-pdf-page > header {
+    height: 50px;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .report-pdf-page > div {
+    padding: 14px 24px 10px !important;
+  }
+
+  .report-pdf-page .pdf-reference {
+    width: 1040px;
+    max-width: 1040px;
+    zoom: 0.68;
+  }
+
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-rsu,
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-asd {
+    height: 185px;
+  }
+
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-fms,
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-blocked-national {
+    height: 235px !important;
+  }
+
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-region-flux,
+  .report-pdf-page .pdf-reference .dashboard-chart.chart-region-blocked {
+    height: 245px;
+  }
+}
+
+.pdf-reference {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.pdf-reference .key-metric-card,
+.pdf-reference .dashboard-panel,
+.pdf-reference .compact-table,
+.pdf-reference .kpi-tile,
+.pdf-reference a,
+.pdf-reference button {
+  border-radius: 0 !important;
+}
+
+.pdf-reference .recharts-rectangle {
+  rx: 0;
+  ry: 0;
+}
+
+.pdf-reference .section-label {
+  margin-bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #00612f;
+}
+
+.pdf-reference .key-metric-card {
+  min-height: 80px;
+  padding: 14px 16px 12px 28px;
+  border-color: #dadde0;
+  border-radius: 0;
+  box-shadow: 0 2px 5px rgba(20, 20, 15, 0.12);
+}
+
+.pdf-reference .key-metric-card > span {
+  top: 6px;
+  height: calc(100% - 12px);
+  width: 6px;
+  border-radius: 0;
+  background: #00612f;
+}
+
+.pdf-reference .key-metric-value {
+  font-size: 26px;
+  line-height: 1;
+  color: #00612f;
+}
+
+.pdf-reference .key-metric-label {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.pdf-reference .key-metric-sublabel {
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.1;
+  color: #8d97a5;
+}
+
+.pdf-reference .dashboard-panel {
+  border-color: #d8dcdf;
+  border-radius: 0;
+  padding: 12px;
+  box-shadow: 0 2px 5px rgba(20, 20, 15, 0.08);
+}
+
+.pdf-reference .dashboard-panel h2 {
+  font-size: 12px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.pdf-reference .dashboard-panel p {
+  font-size: 9px;
+}
+
+.pdf-reference .dashboard-chart.chart-rsu,
+.pdf-reference .dashboard-chart.chart-asd {
+  height: 195px;
+}
+
+.pdf-reference .dashboard-chart.chart-fms,
+.pdf-reference .dashboard-chart.chart-blocked-national {
+  height: 255px !important;
+}
+
+.pdf-reference .dashboard-chart.chart-region-flux,
+.pdf-reference .dashboard-chart.chart-region-blocked {
+  height: 270px;
+}
+
+.pdf-reference .compact-table {
+  margin-top: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.pdf-reference .compact-table table {
+  font-size: 9px;
+}
+
+.pdf-reference .compact-table th {
+  padding: 4px 14px;
+  background: #00612f;
+  color: #ffffff;
+}
+
+.pdf-reference .compact-table td {
+  padding: 4px 14px;
+}
+
+.pdf-reference .kpi-tile {
+  min-height: 54px;
+  border-radius: 0;
+  padding: 10px 14px;
+  box-shadow: 0 2px 5px rgba(20, 20, 15, 0.08);
+}
+
+.pdf-reference .kpi-tile p:first-child {
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.pdf-reference .kpi-tile p:nth-child(2) {
+  margin-top: 2px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.pdf-reference .kpi-tile div {
+  margin-top: 3px;
+  min-height: 0;
+}
+
+.pdf-reference .kpi-tile > div:last-child {
+  display: none;
+}
+
+.pdf-reference .pdf-footnotes {
+  margin-top: 6px;
+}
+
+.fms-reference-chart {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  height: 430px;
+  padding: 18px 22px 0;
+}
+
+.fms-reference-groups {
+  display: grid;
+  gap: 22px;
+  width: min(100%, 880px);
+  height: 330px;
+}
+
+.fms-reference-family {
+  min-height: 36px;
+  text-align: center;
+  color: #050505;
+  font-size: 15px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.fms-reference-rule {
+  height: 5px;
+  margin: 6px 10px 8px;
+  background: #050505;
+}
+
+.fms-reference-bars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+  height: 245px;
+}
+
+.fms-reference-bar-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 38px;
+  height: 100%;
+  min-width: 0;
+}
+
+.fms-reference-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  min-height: 0;
+}
+
+.fms-reference-segment {
+  display: flex;
+  min-height: 18px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  line-height: 1.05;
+  overflow: hidden;
+}
+
+.fms-reference-segment span {
+  font-size: 16px;
+}
+
+.fms-reference-segment small {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fms-reference-segment-compact {
+  flex-direction: row;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.fms-reference-segment-compact span {
+  font-size: 15px;
+}
+
+.fms-reference-segment-compact small {
+  margin-top: 0;
+  font-size: 11px;
+}
+
+.fms-reference-confirme {
+  background: #d40000;
+}
+
+.fms-reference-leve {
+  background: #00572b;
+}
+
+.fms-reference-risk {
+  align-self: center;
+  color: #6f7785;
+  font-size: 15px;
+  line-height: 1;
+  white-space: nowrap;
+  padding-top: 12px;
+}
+
+.fms-reference-axis {
+  width: 100%;
+  height: 2px;
+  margin-top: 4px;
+  background: #d7d7d7;
+}
+
+.fms-reference-legend {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 18px;
+  color: #6f7785;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.fms-reference-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fms-reference-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+}
+
+.pdf-reference .fms-reference-chart {
+  height: 275px;
+  padding: 10px 14px 0;
+}
+
+.pdf-reference .fms-reference-groups {
+  gap: 15px;
+  width: 100%;
+  height: 212px;
+}
+
+.pdf-reference .fms-reference-family {
+  min-height: 27px;
+  font-size: 11px;
+}
+
+.pdf-reference .fms-reference-rule {
+  height: 4px;
+  margin: 4px 8px 6px;
+}
+
+.pdf-reference .fms-reference-bars {
+  gap: 12px;
+  height: 145px;
+}
+
+.pdf-reference .fms-reference-bar-column {
+  grid-template-rows: minmax(0, 1fr) 28px;
+}
+
+.pdf-reference .fms-reference-stack {
+  height: 100%;
+}
+
+.pdf-reference .fms-reference-segment span {
+  font-size: 13px;
+}
+
+.pdf-reference .fms-reference-segment small {
+  margin-top: 2px;
+  font-size: 9px;
+}
+
+.pdf-reference .fms-reference-segment-compact {
+  gap: 3px;
+}
+
+.pdf-reference .fms-reference-segment-compact span {
+  font-size: 10px;
+}
+
+.pdf-reference .fms-reference-segment-compact small {
+  font-size: 8px;
+}
+
+.pdf-reference .fms-reference-risk {
+  font-size: 10px;
+  padding-top: 8px;
+}
+
+.pdf-reference .fms-reference-legend {
+  gap: 24px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+@media print {
+  .report-pdf-page .pdf-reference .fms-reference-chart {
+    height: 235px !important;
+    padding: 8px 14px 0;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-groups {
+    gap: 14px;
+    height: 174px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-family {
+    min-height: 24px;
+    font-size: 10px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-rule {
+    height: 4px;
+    margin: 3px 8px 5px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-bars {
+    gap: 10px;
+    height: 130px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-bar-column {
+    grid-template-rows: minmax(0, 1fr) 18px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-risk {
+    padding-top: 5px;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-axis {
+    margin-top: 2px;
+  }
+
+  .report-pdf-page .pdf-reference .fms-reference-legend {
+    gap: 24px;
+    margin-top: 7px;
+    font-size: 10px;
   }
 }

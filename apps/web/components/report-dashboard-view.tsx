@@ -191,13 +191,13 @@ export type ReportDashboard = {
   };
 };
 
-const GREEN = "#1F8A5B";
-const GREEN_DARK = "#0A3D2A";
-const GREEN_SOFT = "#BDE8CF";
-const RED = "#D73838";
-const RED_DARK = "#B32424";
-const GRAY = "#707070";
-const GRID = "#ECECEC";
+const GREEN = "#00612F";
+const GREEN_DARK = "#00572B";
+const GREEN_SOFT = "#AFC7B2";
+const RED = "#D40000";
+const RED_DARK = "#C90000";
+const GRAY = "#7B8190";
+const GRID = "#E6E8EA";
 
 export function ReportDashboardView({
   dashboard,
@@ -206,13 +206,14 @@ export function ReportDashboardView({
   canExport = true,
 }: {
   dashboard: ReportDashboard;
-  mode?: "interactive" | "print";
+  mode?: "interactive" | "print" | "referencePdf";
   chartId?: DashboardChartId;
   canExport?: boolean;
 }): React.ReactElement {
   const d = dashboard;
   const budget = d.cards.economieBudgetaire;
-  const isPrint = mode === "print";
+  const isReferencePdf = mode === "referencePdf";
+  const isPrint = mode === "print" || isReferencePdf;
   const exportQuery = dashboardDateQuery(d);
 
   if (chartId) {
@@ -228,8 +229,25 @@ export function ReportDashboardView({
   }
 
   return (
+    <ReferencePdfDashboard
+      d={d}
+      canExport={canExport && !isPrint}
+      exportQuery={exportQuery}
+      className={
+        isReferencePdf
+          ? "pdf-reference mx-auto max-w-[1040px] space-y-3 text-brand-ink"
+          : "pdf-reference mx-auto max-w-[1180px] space-y-4 text-brand-ink"
+      }
+    />
+  );
+
+  return (
     <div
-      className="mx-auto max-w-[1180px] space-y-5 text-brand-ink"
+      className={
+        isReferencePdf
+          ? "pdf-reference mx-auto max-w-[1040px] space-y-3 text-brand-ink"
+          : "mx-auto max-w-[1180px] space-y-5 text-brand-ink"
+      }
       data-export-ready="true"
     >
       <section className="grid gap-5 xl:grid-cols-2">
@@ -415,7 +433,219 @@ export function ReportDashboardView({
       </section>
 
       {d.footnotes.length > 0 ? (
-        <ol className="rounded-lg border border-brand-border bg-white px-4 py-3 text-[11px] leading-4 text-brand-muted">
+        <ol className="border border-brand-border bg-white px-4 py-3 text-[11px] leading-4 text-brand-muted">
+          {d.footnotes.map((note, index) => (
+            <li key={`${note}-${index}`}>
+              {index + 1}- {note}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
+  );
+}
+
+function ReferencePdfDashboard({
+  d,
+  canExport = false,
+  exportQuery = "",
+  className = "pdf-reference mx-auto max-w-[1040px] space-y-3 text-brand-ink",
+}: {
+  d: ReportDashboard;
+  canExport?: boolean;
+  exportQuery?: string;
+  className?: string;
+}): React.ReactElement {
+  const budget = d.cards.economieBudgetaire;
+
+  return (
+    <div
+      className={className}
+      data-export-ready="true"
+    >
+      <section className="grid grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <SectionLabel>{d.cards.inscriptions.title}</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <KeyMetricCard metric={d.cards.inscriptions.rnpPersonnesTotal} sublabel="au RNP" />
+            <KeyMetricCard
+              metric={d.cards.inscriptions.rsuMenagesTotal}
+              sublabel={registrationPersonSublabel(
+                "au RSU",
+                d.cards.inscriptions.rsuPersonnesCouvertes,
+              )}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>{d.cards.programmesSociaux.title}</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <KeyMetricCard
+              metric={d.cards.programmesSociaux.asdMenagesActifs}
+              sublabel={personSublabel(d.cards.programmesSociaux.asdPersonnesActives)}
+            />
+            <KeyMetricCard
+              metric={d.cards.programmesSociaux.amoMenagesActifs}
+              sublabel={personSublabel(d.cards.programmesSociaux.amoPersonnesActives)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-5">
+        <Panel
+          title={d.charts.rsuInscriptionsMensuelles.title}
+          exportChartId="rsu-inscriptions"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <RsuChart
+            points={d.charts.rsuInscriptionsMensuelles.series}
+            trend={d.charts.rsuInscriptionsMensuelles.trend}
+          />
+          <CompactTable
+            columns={[
+              ["Mois", "label"],
+              ["Inscrits", "display"],
+              ["Evolution", "deltaDisplay"],
+              ["Evol. (%)", "percentDisplay"],
+            ]}
+            rows={d.tables.rsuEvolution.slice(0, 2)}
+          />
+        </Panel>
+        <Panel
+          title={d.charts.asdEntreesSorties.title}
+          exportChartId="asd-entrees-sorties"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <AsdChart points={d.charts.asdEntreesSorties.series} />
+          <CompactTable
+            columns={[
+              ["Mois", "label"],
+              ["Entrants", "entrantsDisplay"],
+              ["Sortants", "sortantsDisplay"],
+              ["Net", "netDisplay"],
+            ]}
+            rows={d.tables.asdEvolution.slice(0, 2)}
+          />
+        </Panel>
+      </div>
+
+      <section className="grid grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <SectionLabel>Traitement FMS</SectionLabel>
+          <KpiTile
+            metric={d.cards.traitementFms.demandesTraitees}
+            sublabel={traitementFmsSublabel(d)}
+          />
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Résultat</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <KpiTile
+              metric={d.cards.resultatFms.douteConfirme}
+              sublabel={resultatFmsSublabel(d.cards.resultatFms.douteConfirmePct)}
+              tone="red"
+            />
+            <KpiTile
+              metric={d.cards.resultatFms.douteLeve}
+              sublabel={resultatFmsSublabel(d.cards.resultatFms.douteLevePct)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <SectionLabel>Radiation pour fraude</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "asdMenagesRadies")} tone="red" />
+            <KpiTile metric={metricFromBlock(d.cards.radiationFraude, "amoMenagesRadies")} tone="red" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Rescoring</SectionLabel>
+          <div className="grid grid-cols-2 gap-4">
+            <KpiTile metric={metricFromBlock(d.cards.rescoring, "asdMenagesSortants")} tone="red" />
+            <KpiTile metric={metricFromBlock(d.cards.rescoring, "amoMenagesSortants")} tone="red" />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <SectionLabel>{budget.title}</SectionLabel>
+        <div className="grid grid-cols-[1fr_1fr_1fr] gap-4">
+          <KpiTile metric={budget.fraude} />
+          <KpiTile metric={budget.rescoring} />
+          <KpiTile metric={budget.total} tone="greenSolid" />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-5">
+        <Panel
+          title={d.charts.fmsMatriceRisque.title}
+          exportChartId="fms-matrice-risque"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <FmsMatrixChart rows={d.charts.fmsMatriceRisque.rows} />
+        </Panel>
+        <Panel
+          title={d.charts.menagesBloquesNational.title}
+          exportChartId="menages-bloques-national"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <BlockedNationalChart rows={d.charts.menagesBloquesNational.rows} />
+        </Panel>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5">
+        <Panel
+          title={d.charts.fluxRegionauxAsdAmot.title}
+          exportChartId="flux-regionaux"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <RegionFluxChart rows={d.charts.fluxRegionauxAsdAmot.rows} />
+          <CompactTable
+            columns={[
+              ["Province", "province"],
+              ["Ent.", "entrantsRaw"],
+              ["Sort.", "sortantsRaw"],
+              ["Net", "netDisplay"],
+            ]}
+            rows={d.tables.topProvincesFlux.slice(0, 5)}
+            headerColor="green"
+          />
+        </Panel>
+        <Panel
+          title={d.charts.menagesBloquesRegionaux.title}
+          exportChartId="menages-bloques-regionaux"
+          exportQuery={exportQuery}
+          canExport={canExport}
+          isPrint={!canExport}
+        >
+          <RegionBlockedChart rows={d.charts.menagesBloquesRegionaux.rows} />
+          <CompactTable
+            columns={[
+              ["Province", "province"],
+              ["Bloqués", "menagesDisplay"],
+            ]}
+            rows={d.tables.topProvincesBloquees.slice(0, 5)}
+            headerColor="green"
+          />
+        </Panel>
+      </div>
+
+      {d.footnotes.length > 0 ? (
+        <ol className="pdf-footnotes text-[10px] leading-4 text-brand-soft">
           {d.footnotes.map((note, index) => (
             <li key={`${note}-${index}`}>
               {index + 1}- {note}
@@ -429,7 +659,7 @@ export function ReportDashboardView({
 
 function SectionLabel({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
-    <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-ink">
+    <h2 className="section-label text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-primary">
       {children}
     </h2>
   );
@@ -443,16 +673,16 @@ function KeyMetricCard({
   sublabel?: string;
 }): React.ReactElement {
   return (
-    <div className="relative min-h-[154px] rounded-md border border-brand-border bg-brand-surface py-6 pl-8 pr-6 shadow-card">
-      <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-3 rounded-full bg-brand-primary" />
-      <p className="text-4xl font-semibold leading-none tracking-normal text-brand-primary">
+    <div className="key-metric-card relative min-h-[154px] border border-brand-border bg-brand-surface py-6 pl-8 pr-6 shadow-card">
+      <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-3 bg-brand-primary" />
+      <p className="key-metric-value text-4xl font-semibold leading-none tracking-normal text-brand-primary">
         {metric.compactDisplay ?? metric.display ?? "-"}
       </p>
-      <p className="mt-2 text-xl font-semibold leading-6 text-brand-ink">
+      <p className="key-metric-label mt-2 text-xl font-semibold leading-6 text-brand-ink">
         {metric.label}
       </p>
       {sublabel ? (
-        <p className="mt-1 text-base leading-5 text-brand-muted">{sublabel}</p>
+        <p className="key-metric-sublabel mt-1 text-base leading-5 text-brand-muted">{sublabel}</p>
       ) : null}
     </div>
   );
@@ -541,7 +771,7 @@ function KpiTile({
 
   return (
     <div
-      className={`min-h-[98px] rounded-lg border ${
+      className={`kpi-tile min-h-[98px] border ${
         isSolid
           ? "border-brand-primary bg-brand-primary text-white shadow-card"
           : "border-brand-border bg-white"
@@ -555,7 +785,7 @@ function KpiTile({
       </p>
       <div className="mt-2 flex min-h-5 flex-wrap items-center gap-2">
         {delta ? (
-          <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${badgeColor}`}>
+          <span className={`px-2 py-0.5 text-[11px] font-semibold ${badgeColor}`}>
             {delta}
           </span>
         ) : null}
@@ -567,9 +797,9 @@ function KpiTile({
       </div>
       {!isSolid ? (
         <div className="mt-3 grid grid-cols-3 gap-1">
-          <span className={`h-1 rounded ${barColor}`} />
-          <span className={`h-1 rounded ${barColor}`} />
-          <span className={`h-1 rounded ${barColor}`} />
+          <span className={`h-1 ${barColor}`} />
+          <span className={`h-1 ${barColor}`} />
+          <span className={`h-1 ${barColor}`} />
         </div>
       ) : null}
     </div>
@@ -594,7 +824,7 @@ function Panel({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <section className="rounded-lg border border-brand-border bg-white p-4 print:break-inside-avoid">
+    <section className="dashboard-panel border border-brand-border bg-white p-4 print:break-inside-avoid">
       <div className="mb-3 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-brand-ink">{title}</h2>
@@ -604,7 +834,7 @@ function Panel({
           <a
             href={`/api/reports/dashboard/charts/${exportChartId}/export.png${exportQuery}`}
             download={`rsu-dashboard-${exportChartId}.png`}
-            className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-brand-border bg-white px-2 text-[11px] font-medium text-brand-ink hover:bg-brand-bg"
+            className="inline-flex h-7 items-center justify-center gap-1 border border-brand-border bg-white px-2 text-[11px] font-medium text-brand-ink hover:bg-brand-bg"
           >
             <Download className="h-3 w-3" aria-hidden />
             PNG
@@ -632,15 +862,15 @@ function RsuChart({
   }));
 
   return (
-    <div className="h-[260px]">
+    <div className="dashboard-chart chart-rsu h-[260px]">
       <ResponsiveContainer>
         <ComposedChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-          <Bar dataKey="value" name="Inscrits RNP" fill={GREEN_SOFT} barSize={26} radius={[4, 4, 0, 0]} />
+          <Legend verticalAlign="top" height={28} wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar dataKey="value" name="Inscrits RNP" fill={GREEN_SOFT} barSize={26} radius={[0, 0, 0, 0]} />
           <Line
             type="monotone"
             dataKey="trend"
@@ -658,15 +888,15 @@ function RsuChart({
 
 function AsdChart({ points }: { points: AsdPoint[] }): React.ReactElement {
   return (
-    <div className="h-[260px]">
+    <div className="dashboard-chart chart-asd h-[260px]">
       <ResponsiveContainer>
         <ComposedChart data={points} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-          <Bar dataKey="netRaw" name="Delta" fill="#D6D6D3" barSize={22} radius={[4, 4, 0, 0]} />
+          <Legend verticalAlign="top" height={28} wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+          <Bar dataKey="netRaw" name="Delta" fill="#D6D6D3" barSize={22} radius={[0, 0, 0, 0]} />
           <Line type="monotone" dataKey="entrantsRaw" name="Entrées" stroke={GREEN} strokeWidth={2} dot={{ r: 3, fill: GREEN, strokeWidth: 0 }} />
           <Line type="monotone" dataKey="sortantsRaw" name="Sorties" stroke={RED} strokeWidth={2} dot={{ r: 3, fill: RED, strokeWidth: 0 }} />
         </ComposedChart>
@@ -676,67 +906,68 @@ function AsdChart({ points }: { points: AsdPoint[] }): React.ReactElement {
 }
 
 function FmsMatrixChart({ rows }: { rows: FmsMatrixRow[] }): React.ReactElement {
-  const data = rows.map((row) => ({
-    label: `${row.typeFamille} - ${shortRisk(row.niveauRisque)}`,
-    confirme: row.douteConfirmeRaw,
-    leve: row.douteLeveRaw,
-  }));
-  const height = Math.max(320, data.length * 46);
+  const groups = groupFmsRows(rows);
 
   return (
-    <div style={{ height }}>
-      <ResponsiveContainer>
-        <BarChart
-          layout="vertical"
-          data={data}
-          margin={{ top: 8, right: 24, left: 0, bottom: 8 }}
-        >
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
-          <XAxis
-            type="number"
-            tick={{ fontSize: 10, fill: GRAY }}
-            tickFormatter={formatCompactAxis}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            type="category"
-            dataKey="label"
-            width={168}
-            tick={{ fontSize: 10, fill: GRAY }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-          <Bar
-            dataKey="confirme"
-            stackId="fms"
-            name="Doute confirmé"
-            fill={RED}
-            barSize={16}
-            radius={[0, 0, 0, 0]}
-          />
-          <Bar
-            dataKey="leve"
-            stackId="fms"
-            name="Doute levé"
-            fill={GREEN}
-            barSize={16}
-            radius={[0, 4, 4, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="fms-reference-chart dashboard-chart chart-fms">
+      <div
+        className="fms-reference-groups"
+        style={{ gridTemplateColumns: `repeat(${Math.max(groups.length, 1)}, minmax(0, 1fr))` }}
+      >
+        {groups.map((group) => (
+          <div className="fms-reference-group" key={group.family}>
+            <div className="fms-reference-family">{group.family}</div>
+            <div className="fms-reference-rule" />
+            <div
+              className="fms-reference-bars"
+              style={{
+                gridTemplateColumns: `repeat(${Math.max(group.rows.length, 1)}, minmax(0, 1fr))`,
+              }}
+            >
+              {group.rows.map((row) => (
+                <div className="fms-reference-bar-column" key={`${group.family}-${row.risk}`}>
+                  <div className="fms-reference-stack">
+                    <div
+                      className={`fms-reference-segment fms-reference-leve ${
+                        row.levePct < 18 ? "fms-reference-segment-compact" : ""
+                      }`}
+                      style={{ height: `${row.levePct}%` }}
+                    >
+                      <span>{formatCompactLabel(row.leve)}</span>
+                      <small>{formatPercent(row.levePct)}</small>
+                    </div>
+                    <div
+                      className={`fms-reference-segment fms-reference-confirme ${
+                        row.confirmePct < 18 ? "fms-reference-segment-compact" : ""
+                      }`}
+                      style={{ height: `${row.confirmePct}%` }}
+                    >
+                      <span>{formatCompactLabel(row.confirme)}</span>
+                      <small>{formatPercent(row.confirmePct)}</small>
+                    </div>
+                  </div>
+                  <div className="fms-reference-risk">{row.risk}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="fms-reference-axis" />
+      <div className="fms-reference-legend">
+        <span><i className="bg-[#D40000]" />Doute confirmé</span>
+        <span><i className="bg-[#00572B]" />Doute levé</span>
+      </div>
     </div>
   );
 }
 
 function BlockedNationalChart({ rows }: { rows: BlockedNationalRow[] }): React.ReactElement {
   return (
-    <div className="h-[330px]">
+    <div className="dashboard-chart chart-blocked-national h-[330px]">
       <ResponsiveContainer>
         <BarChart data={rows} margin={{ top: 18, right: 12, left: 0, bottom: 12 }}>
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="motifBlocage" tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
@@ -755,20 +986,20 @@ function BlockedNationalChart({ rows }: { rows: BlockedNationalRow[] }): React.R
 function RegionFluxChart({ rows }: { rows: RegionFluxRow[] }): React.ReactElement {
   const data = rows.filter((row) => row.entrantsRaw || row.sortantsRaw);
   return (
-    <div className="h-[320px]">
+    <div className="dashboard-chart chart-region-flux h-[320px]">
       <ResponsiveContainer>
         <BarChart
           layout="vertical"
           data={data}
           margin={{ top: 8, right: 18, left: 0, bottom: 8 }}
         >
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
+          <CartesianGrid stroke={GRID} horizontal={false} />
           <XAxis type="number" tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
           <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-          <Bar dataKey="entrantsRaw" name="Entrants" fill={GREEN} barSize={8} radius={[0, 4, 4, 0]} />
-          <Bar dataKey="sortantsRaw" name="Sortants" fill={RED} barSize={8} radius={[0, 4, 4, 0]} />
+          <Bar dataKey="entrantsRaw" name="Entrants" fill={GREEN} barSize={8} radius={[0, 0, 0, 0]} />
+          <Bar dataKey="sortantsRaw" name="Sortants" fill={RED} barSize={8} radius={[0, 0, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -780,18 +1011,18 @@ function RegionBlockedChart({ rows }: { rows: RegionBlockedRow[] }): React.React
     .filter((row) => row.menagesRaw > 0)
     .sort((a, b) => b.menagesRaw - a.menagesRaw);
   return (
-    <div className="h-[320px]">
+    <div className="dashboard-chart chart-region-blocked h-[320px]">
       <ResponsiveContainer>
         <BarChart
           layout="vertical"
           data={data}
           margin={{ top: 8, right: 28, left: 0, bottom: 8 }}
         >
-          <CartesianGrid stroke={GRID} strokeDasharray="2 4" horizontal={false} />
+          <CartesianGrid stroke={GRID} horizontal={false} />
           <XAxis type="number" tick={{ fontSize: 10, fill: GRAY }} tickFormatter={formatCompactAxis} axisLine={false} tickLine={false} />
           <YAxis type="category" dataKey="codeRegion" width={34} tick={{ fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number) => formatNumber(value)} />
-          <Bar dataKey="menagesRaw" name="Bloqués" fill={RED_DARK} barSize={10} radius={[0, 4, 4, 0]}>
+          <Bar dataKey="menagesRaw" name="Bloqués" fill={RED_DARK} barSize={10} radius={[0, 0, 0, 0]}>
             <LabelList dataKey="menagesDisplay" position="right" fontSize={10} fill="#14140F" />
           </Bar>
         </BarChart>
@@ -810,7 +1041,7 @@ function CompactTable({
   headerColor?: "green" | "gray";
 }): React.ReactElement {
   return (
-    <div className="mt-3 overflow-hidden rounded-lg border border-brand-border">
+    <div className="compact-table mt-3 overflow-hidden border border-brand-border">
       <table className="w-full table-fixed text-[10px]">
         <thead className={headerColor === "green" ? "bg-brand-primary text-white" : "bg-brand-bg text-brand-soft"}>
           <tr>
@@ -872,6 +1103,20 @@ function registrationPersonSublabel(prefix: string, metric?: Metric): string {
   return `${prefix} · ${display} pers.`;
 }
 
+function traitementFmsSublabel(dashboard: ReportDashboard): string {
+  const injected = dashboard.cards.traitementFms.demandesInjectees.compactDisplay
+    ?? dashboard.cards.traitementFms.demandesInjectees.display;
+  const rate = dashboard.cards.traitementFms.tauxTraitementPct.display;
+  if (injected && rate) return `Sur ${injected} injectées (taux ${rate})`;
+  if (rate) return `Taux ${rate}`;
+  return "";
+}
+
+function resultatFmsSublabel(metric: Metric): string {
+  const display = metric.display ?? metric.compactDisplay;
+  return display ? `${display} des traitements` : "";
+}
+
 function unitLabel(unit?: string): string {
   return String(unit || "MENAGES").toUpperCase() === "PERSONNES" ? "personnes" : "ménages";
 }
@@ -907,6 +1152,16 @@ function formatCompactAxis(value: number): string {
   return formatNumber(value);
 }
 
+function formatCompactLabel(value: unknown): string {
+  const numeric = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+  return formatCompactAxis(numeric);
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value)}%`;
+}
+
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -920,4 +1175,55 @@ function shortRisk(value: string): string {
   if (lower.includes("élev") || lower.includes("elev")) return "Elevé";
   if (lower.includes("moy")) return "Moyen";
   return value.slice(0, 8);
+}
+
+function familyShortLabel(value: string): string {
+  return value;
+}
+
+function groupFmsRows(rows: FmsMatrixRow[]): {
+  family: string;
+  rows: {
+    risk: string;
+    confirme: number;
+    leve: number;
+    confirmePct: number;
+    levePct: number;
+  }[];
+}[] {
+  const groups = new Map<string, {
+    risk: string;
+    confirme: number;
+    leve: number;
+    confirmePct: number;
+    levePct: number;
+  }[]>();
+
+  for (const row of rows) {
+    const family = familyShortLabel(row.typeFamille);
+    const total = row.douteConfirmeRaw + row.douteLeveRaw;
+    const confirmePct = total > 0 ? (row.douteConfirmeRaw / total) * 100 : 0;
+    const levePct = total > 0 ? (row.douteLeveRaw / total) * 100 : 0;
+    const next = {
+      risk: shortRisk(row.niveauRisque),
+      confirme: row.douteConfirmeRaw,
+      leve: row.douteLeveRaw,
+      confirmePct,
+      levePct,
+    };
+    groups.set(family, [...(groups.get(family) ?? []), next]);
+  }
+
+  return [...groups.entries()]
+    .map(([family, familyRows]) => ({
+      family,
+      rows: familyRows.sort((a, b) => riskOrder(a.risk) - riskOrder(b.risk)),
+    }));
+}
+
+function riskOrder(value: string): number {
+  const lower = value.toLowerCase();
+  if (lower.includes("elev") || lower.includes("élev")) return 0;
+  if (lower.includes("moy")) return 1;
+  return 2;
 }
