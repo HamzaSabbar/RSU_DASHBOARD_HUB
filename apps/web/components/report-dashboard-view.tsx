@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import type { DashboardChartId } from "@/lib/dashboard-export";
+import { ExportDownloadButton } from "@/components/export-download-button";
 
 type Metric = {
   label: string;
@@ -831,14 +832,15 @@ function Panel({
           {subtitle ? <p className="mt-1 text-[11px] text-brand-muted">{subtitle}</p> : null}
         </div>
         {exportChartId && canExport && !isPrint ? (
-          <a
+          <ExportDownloadButton
             href={`/api/reports/dashboard/charts/${exportChartId}/export.png${exportQuery}`}
-            download={`rsu-dashboard-${exportChartId}.png`}
-            className="inline-flex h-7 items-center justify-center gap-1 border border-brand-border bg-white px-2 text-[11px] font-medium text-brand-ink hover:bg-brand-bg"
+            filename={`rsu-dashboard-${exportChartId}.png`}
+            pendingLabel="..."
+            className="inline-flex h-7 items-center justify-center gap-1 border border-brand-border bg-white px-2 text-[11px] font-medium text-brand-ink hover:bg-brand-bg disabled:cursor-wait disabled:opacity-60"
           >
             <Download className="h-3 w-3" aria-hidden />
             PNG
-          </a>
+          </ExportDownloadButton>
         ) : !isPrint && canExport ? (
           <span className="text-base leading-none text-brand-muted">...</span>
         ) : null}

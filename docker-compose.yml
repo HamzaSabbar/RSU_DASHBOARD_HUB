@@ -83,6 +83,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       API_URL_INTERNAL: ${API_URL_INTERNAL}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      PDF_RENDER_BASE_URL: ${PDF_RENDER_BASE_URL:-http://web:3000}
       NODE_ENV: production
     ports:
       - "3000:3000"

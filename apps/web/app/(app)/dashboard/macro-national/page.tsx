@@ -12,6 +12,7 @@ import {
   type ReportAvailablePeriods,
 } from "@/components/report-date-filter";
 import { UploadDrawer } from "@/components/upload-drawer";
+import { ExportDownloadButton } from "@/components/export-download-button";
 import {
   Card,
   CardContent,
@@ -67,14 +68,15 @@ export default async function MacroNationalPage({
               <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden />
               Modèle Excel
             </a>
-            <a
+            <ExportDownloadButton
               href={`/api/reports/dashboard/export.pdf${exportQuery}`}
-              download="rsu-dashboard-macro-national.pdf"
-              className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-brand-border bg-white px-3 text-xs font-medium text-brand-ink hover:bg-brand-bg"
+              filename="rsu-dashboard-macro-national.pdf"
+              pendingLabel="Export..."
+              className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-brand-border bg-white px-3 text-xs font-medium text-brand-ink hover:bg-brand-bg disabled:cursor-wait disabled:opacity-60"
             >
               <Download className="h-3.5 w-3.5" aria-hidden />
               Exporter
-            </a>
+            </ExportDownloadButton>
             <UploadDrawer />
           </div>
         ) : null}
