@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.deps import get_current_user
 from boards.registry import discover_boards
-from db.models import Board, BoardSnapshot, User
+from db.models import Board, BoardSnapshot, PlatformRelease, User
 from db.session import get_session
 
 router = APIRouter(prefix="/api/boards", tags=["boards"])
@@ -41,13 +41,21 @@ async def list_boards(
 
     out: list[BoardSummary] = []
     for slug, spec in registry.items():
-        last = await session.scalar(
-            select(BoardSnapshot.computed_at)
-            .join(Board, Board.id == BoardSnapshot.board_id)
-            .where(Board.slug == slug)
-            .order_by(BoardSnapshot.computed_at.desc())
-            .limit(1)
-        )
+        if slug == "programmes-sociaux-rescoring":
+            last = await session.scalar(
+                select(PlatformRelease.published_at)
+                .where(PlatformRelease.is_active.is_(True))
+                .order_by(PlatformRelease.published_at.desc())
+                .limit(1)
+            )
+        else:
+            last = await session.scalar(
+                select(BoardSnapshot.computed_at)
+                .join(Board, Board.id == BoardSnapshot.board_id)
+                .where(Board.slug == slug)
+                .order_by(BoardSnapshot.computed_at.desc())
+                .limit(1)
+            )
         title, description = db_boards.get(slug, (spec.title, spec.description))
         out.append(
             BoardSummary(

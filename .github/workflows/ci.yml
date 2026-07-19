@@ -9,6 +9,24 @@ on:
 jobs:
   api:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rsu
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: rsu_dashboard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rsu -d rsu_dashboard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://rsu:ci-password@localhost:5432/rsu_dashboard
+      DATABASE_URL_SYNC: postgresql+psycopg://rsu:ci-password@localhost:5432/rsu_dashboard
+      NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,6 +40,9 @@ jobs:
       - name: ruff
         working-directory: apps/api
         run: ruff check .
+      - name: Migrate test database
+        working-directory: apps/api
+        run: alembic upgrade head
       - name: pytest
         working-directory: apps/api
         run: pytest -q
@@ -44,16 +65,11 @@ jobs:
       - name: Typecheck
         working-directory: apps/web
         run: npm run typecheck
-      # NOTE: `npm run build` is currently blocked by a Next 14.2 /
-      # NextAuth interaction that fails to prerender the legacy /_error
-      # fallbacks (/404, /500). The dev server (`next dev`) and the
-      # prod server (`next start`) both work. Tracked as a follow-up.
-      # Uncomment once resolved.
-      # - name: Build
-      #   working-directory: apps/web
-      #   env:
-      #     NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters
-      #     NEXTAUTH_URL: http://localhost:3000
-      #     API_URL_INTERNAL: http://api:8000
-      #     NEXT_PUBLIC_API_URL: http://localhost:8000
-      #   run: npm run build
+      - name: Build
+        working-directory: apps/web
+        env:
+          NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters
+          NEXTAUTH_URL: http://localhost:3100
+          API_URL_INTERNAL: http://api:8000
+          NEXT_PUBLIC_API_URL: http://localhost:8100
+        run: npm run build

@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, DatabaseZap, ShieldAlert, UserPlus, Users } from "lucide-react";
+import {
+  ChevronRight,
+  Database,
+  DatabaseZap,
+  Play,
+  ShieldAlert,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { ApiError, apiFetch } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -21,6 +29,34 @@ type AdminUser = {
   email: string;
   role: string;
 };
+
+type DataPlatformBatch = {
+  id: string;
+  source_key: string;
+  pipeline_version: string;
+  content_hash: string | null;
+  status: string;
+  stage: string;
+  progress: number;
+  created_at: string;
+  finished_at: string | null;
+  error_summary: string | null;
+};
+
+async function queueRsuBuild(formData: FormData): Promise<void> {
+  "use server";
+
+  const includeScoreVariables = formData.get("includeScoreVariables") === "on";
+  const batch = await apiFetch<DataPlatformBatch>("/api/data-platform/batches", {
+    method: "POST",
+    body: JSON.stringify({
+      source_key: "rsu-csv",
+      compatibility_profile: "julia-30d-v1",
+      include_score_variables: includeScoreVariables,
+    }),
+  });
+  redirect(`/admin?analyticsQueued=1&analyticsBatch=${batch.id}`);
+}
 
 async function clearReportData(formData: FormData): Promise<void> {
   "use server";
@@ -79,12 +115,17 @@ export default async function AdminPage({
     viewerCreated?: string;
     email?: string;
     userError?: string;
+    analyticsQueued?: string;
+    analyticsBatch?: string;
   };
 }): Promise<React.ReactElement> {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
   if (role !== "admin") redirect("/dashboard");
   const users = await apiFetch<AdminUser[]>("/api/auth/users");
+  const analyticsBatches = await apiFetch<DataPlatformBatch[]>(
+    "/api/data-platform/batches?limit=10",
+  );
   const viewerCount = users.filter((user) => user.role === "viewer").length;
 
   return (
@@ -117,6 +158,74 @@ export default async function AdminPage({
             Lecteur créé: {searchParams.email ?? "nouvel utilisateur"}.
           </div>
         ) : null}
+
+        {searchParams?.analyticsQueued === "1" ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+            Préparation analytique mise en file d’attente : {searchParams.analyticsBatch}.
+            Le dashboard actif ne changera qu’après validation complète.
+          </div>
+        ) : null}
+
+        <section className="rounded-lg border border-brand-border bg-brand-surface">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-brand-border p-5">
+            <div className="flex items-start gap-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-brand-primary">
+                <Database className="h-5 w-5" aria-hidden />
+              </span>
+              <div>
+                <h2 className="text-base font-semibold text-brand-ink">Plateforme de données RSU</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
+                  Lance la validation du dossier RAW monté en lecture seule, puis construit les tables Parquet/Arrow et le catalogue DuckDB. PostgreSQL conserve l’historique, les contrôles qualité et la version active.
+                </p>
+              </div>
+            </div>
+            <form action={queueRsuBuild} className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-xs text-brand-muted">
+                <input name="includeScoreVariables" type="checkbox" defaultChecked className="h-4 w-4 accent-brand-primary" />
+                Inclure score_variable.csv (traitement long)
+              </label>
+              <Button type="submit" className="gap-2">
+                <Play className="h-4 w-4" aria-hidden />
+                Préparer et publier
+              </Button>
+            </form>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-brand-bg text-left text-xs uppercase tracking-wide text-brand-muted">
+                  <th className="px-4 py-3">Créé</th>
+                  <th className="px-4 py-3">Version</th>
+                  <th className="px-4 py-3">Étape</th>
+                  <th className="px-4 py-3">Progression</th>
+                  <th className="px-4 py-3">Résultat</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-border">
+                {analyticsBatches.map((batch) => (
+                  <tr key={batch.id}>
+                    <td className="whitespace-nowrap px-4 py-3 text-brand-soft">{formatDateTime(batch.created_at)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-brand-ink">{batch.content_hash?.slice(0, 12) ?? batch.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-brand-soft">{batch.stage}</td>
+                    <td className="min-w-44 px-4 py-3">
+                      <div className="h-2 overflow-hidden rounded bg-brand-bg"><div className="h-full bg-brand-primary" style={{ width: `${batch.progress}%` }} /></div>
+                      <span className="mt-1 block text-xs text-brand-muted">{batch.progress}%</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded px-2 py-1 text-xs font-semibold ${batch.status === "succeeded" ? "bg-green-50 text-green-800" : batch.status === "failed" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-800"}`}>
+                        {batch.status}
+                      </span>
+                      {batch.error_summary ? <p className="mt-2 max-w-md text-xs text-red-700">{batch.error_summary}</p> : null}
+                    </td>
+                  </tr>
+                ))}
+                {analyticsBatches.length === 0 ? (
+                  <tr><td colSpan={5} className="px-4 py-6 text-center text-sm text-brand-muted">Aucune préparation analytique lancée.</td></tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {searchParams?.userError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -257,4 +366,13 @@ function roleLabel(role: string): string {
   if (role === "admin") return "Administrateur";
   if (role === "editor") return "Gestionnaire";
   return "Lecture seule";
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }

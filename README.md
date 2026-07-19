@@ -1,13 +1,27 @@
 # RSU Dashboard Hub
 
-Authenticated web workspace hosting the **Macro National** RSU weekly dashboard. Admins upload one French Excel workbook through the UI; the API stores the raw file and creates a queued report job, a separate worker validates/parses/calculates the workbook, and the web dashboard renders the latest succeeded dashboard JSON.
+Authenticated workspace hosting RSU dashboards. The Macro National dashboard
+keeps its validated Excel pipeline. The shared RSU data platform ingests the
+client RAW CSV directory once, publishes versioned columnar data products, and
+serves the Programmes sociaux / Rescoring dashboard by subject, region,
+province and selected period.
 
 ## Stack
 
 - **Web**: Next.js 14 (App Router) + TypeScript strict + Tailwind + shadcn-style primitives + Recharts + NextAuth v5 (Credentials)
-- **API**: FastAPI + SQLAlchemy 2 + Alembic + Pydantic v2 + Pandas + openpyxl + Google Cloud Storage
+- **API**: FastAPI + SQLAlchemy 2 + Alembic + Pydantic v2 + DuckDB + PyArrow + Pandas/openpyxl
 - **DB**: PostgreSQL 16
-- **Infra**: Docker Compose (services `db`, `api`, `worker`, `web`). Dev-mode hot reload via `docker-compose.override.yml`.
+- **Analytics**: explicit-schema CSV → Zstandard Parquet/Arrow + read-only DuckDB catalog
+- **Infra**: Docker Compose (`db`, `api`, `worker`, `analytics-worker`, `web`). Dev-mode hot reload via `docker-compose.override.yml`.
+
+## Shared data platform
+
+The client RSU CSV extract is the shared source of truth for supported metrics.
+PostgreSQL is the transactional control plane; DuckDB prepares and queries
+versioned Parquet/Arrow artifacts. Dashboard responses are cached in a bounded,
+release-versioned TTL/LRU cache (default: 15 minutes, 512 entries, 64 MB).
+
+See [the platform-wide data architecture plan](docs/rsu-data-platform-plan.md).
 
 ## Running locally
 
@@ -23,11 +37,34 @@ docker compose up --build
 
 Then open:
 
-- Web UI: http://localhost:3000
-- API docs: http://localhost:8000/docs
-- API health: http://localhost:8000/health
+- Web UI: http://localhost:3100
+- API docs: http://localhost:8100/docs
+- API health: http://localhost:8100/health
 
 Log in with the `ADMIN_EMAIL` and `ADMIN_PASSWORD` values from `.env`.
+
+### Preparing the RSU RAW CSV directory
+
+Development mounts `data/julia-rsu/raw/` read-only into `analytics-worker` and
+writes generated releases to `data/analytics/`. In **Administration → Plateforme
+de données RSU**, click **Préparer et publier**. Keep the score-variable option
+checked for a full build, or clear it for a faster core-light build.
+
+The equivalent trusted operations command is:
+
+```bash
+docker compose exec api python -m data_platform.cli enqueue --include-score-variables
+```
+
+The worker hashes every source file, validates headers and typed values, builds
+the release, records quality checks in PostgreSQL, and atomically publishes only
+after success. A failed build never replaces the current release. Inspect jobs
+in the admin page or through `GET /api/data-platform/batches`.
+
+Main analytics settings are documented in `.env.example`. For large samples,
+adjust `ANALYTICS_MEMORY_LIMIT`, `ANALYTICS_THREADS`,
+`ANALYTICS_MAX_TEMP_DIRECTORY_SIZE` and the bounded cache settings rather than
+loading RAW CSV into the API process.
 
 ### Dev vs. prod compose
 
@@ -508,7 +545,7 @@ Supported `code_programme` values are normally `ASD` and `AMO_TADAMON`. Use `cod
 All examples assume you already have a FastAPI JWT in `TOKEN`.
 
 ```bash
-curl -X POST "http://localhost:8000/api/reports/jobs" \
+curl -X POST "http://localhost:8100/api/reports/jobs" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@rapport_rsu.xlsx"
 ```
@@ -540,7 +577,7 @@ Duplicate `id_chargement` values from `01_Parametres` are rejected by default wi
 To intentionally replace the active business upload:
 
 ```bash
-curl -X POST "http://localhost:8000/api/reports/jobs?replace=true" \
+curl -X POST "http://localhost:8100/api/reports/jobs?replace=true" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@rapport_rsu.xlsx"
 ```
@@ -549,7 +586,7 @@ Poll status:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/reports/jobs/{jobId}/status"
+  "http://localhost:8100/api/reports/jobs/{jobId}/status"
 ```
 
 Statuses are `queued`, `running`, `succeeded`, and `failed`.
@@ -558,14 +595,14 @@ Fetch validation:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/reports/jobs/{jobId}/validation"
+  "http://localhost:8100/api/reports/jobs/{jobId}/validation"
 ```
 
 Fetch the job-specific dashboard/debug JSON after success:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/reports/jobs/{jobId}/dashboard"
+  "http://localhost:8100/api/reports/jobs/{jobId}/dashboard"
 ```
 
 If the job is still queued/running or failed, the job dashboard endpoint returns a useful `409` response with the job status and validation URL.
@@ -574,7 +611,7 @@ Fetch the cumulative dashboard rendered by `/dashboard/macro-national`:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/reports/dashboard?startDate=2026-04-01&endDate=2026-04-30"
+  "http://localhost:8100/api/reports/dashboard?startDate=2026-04-01&endDate=2026-04-30"
 ```
 
 If no date parameters are supplied, the API uses the latest active upload batch period.
@@ -583,7 +620,7 @@ Fetch available date-filter metadata:
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/reports/available-periods"
+  "http://localhost:8100/api/reports/available-periods"
 ```
 
 ### Dashboard response shape

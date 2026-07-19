@@ -1,0 +1,709 @@
+PAGES 20
+----- PAGE 1 TEXT -----
+Projet d’Identification et de ciblage pour la
+protection sociale (PICPPS)
+Point synchro projet
+18/5/2026
+Update 18/5/2026
+----- PAGE 2 TEXT -----
+SOMMAIRE
+1
+2
+3
+4
+5
+6
+Activité RNP/RSU
+Suivi des projets RSU
+Suivi des projets RNP
+Backlog développement RNP/RSU
+Assistance technique BM
+PICPPS II, Com.
+----- PAGE 3 TEXT -----
+Propagation des IDCS inscrits 2026 dans le RSU/PS
+IDCS Emis 23,18 MM Femmes IDCS inscrits 2026 - Statut d'inscription RSU/ASD/AMOT par Âge
+300000
+250000
+200000
+150000
+100000
+50000
+0
+Tranche d’âge
+256263
+180450
+79661
+62106
+66922
+46578
+44716
+27510
+27892
+32575
+11001
+9075
+12791
+11760
+52,13% # Ménages RSU 5,45 MM # Indiv. RSU 20,06 MM
+IDCS non inscrits au RSU :
+• Délai moyen entre l’enrôlement au RNP et
+l’inscription au RSU : 86 Jours .
+• 75 813 IDCS ne sont pas encore inscrits au RSU
+• Potentiel d’inscription RSU: 59 146 personnes
+• 3 903 authentifiés avec succès au RSU
+• 584 envois d’OTP mais non achevés au RSU
+Enrôlemets RNP liées aux demandes de passeports f
+• 1 693 sur 256 269 ont la même semaine de
+l’inscription RNP/Passeport soit 6‰
+IDCS inscrits au RSU mais pas aux PS:
+• 6 754 authentifiés avec succès aux ASD
+• 1 143 envois d’OTP mais non achevés aux ASD
+• 2 558 authentifiés avec succès au AMOT
+• 236 envois d’OTP mais non achevés au AMOT
+62183
+55719
+41845
+26676
+21257
+7138
+5126
+14377
+3743
+1866
+0-5 5-18 18-40 40-60 >=60 Total général
+Total Inscription RSU Bénéficiare ASD Bénéficiare AMOT
+DOCUMENT STRICTEMENT CONFIDENTIEL – DIFFUSION INTERDITE 3
+----- PAGE 4 TEXT -----
+200000
+180000
+160000
+140000
+120000
+100000
+80000
+60000
+40000
+20000
+0
+Echange DGSN-RNP
+Statistiques
+15/05/2026
+Vérification de l'adresse DGSN-RNP
+187838
+11,77% des rejets potentiels:
+• 88,48% des rejets potentiel
+suite à la différence de la
+commune.
+96186
+• 11,52% des rejets potentiel
+suite à la différence de la
+province -> MEP du rejet des
+P/P différente le 14/05/2026 :
+81 paquets rejetés
+47767
+43885
+7,58% des paquets sans mapping
+DGSN/RNP
+22117
+14252
+11101
+5853
+7341
+757 3605
+5163
+1446 346 3306
+2549
+Mars-2026 Avril-2026 Mai-2026 Total général
+Total des paquets Total rejet Dont P/P diff Mapping inexistant
+DOCUMENT STRICTEMENT CONFIDENTIEL – DIFFUSION INTERDITE 4
+----- PAGE 5 TEXT -----
+Activité RNP
+140000
+120000
+100000
+80000
+57,963
+60000
+55,009
+40000
+20000
+0
+Statistiques
+15/05/2026
+Evolution des Inscriptions et MAJ RNP
+118,663
+77,027
+53,078
+52,558
+55,664
+59,234
+51,351
+34,894
+Inscriptions MAJ
+DOCUMENT STRICTEMENT CONFIDENTIEL – DIFFUSION INTERDITE 5
+----- PAGE 6 TEXT -----
+Evolution hebdomadaire des MAJ par type
+Statistiques
+15/05/2026
+31581
+30956
+• 33% des mises à jour
+concernent les informations
+démographiques.
+26490
+9895
+11150
+9036
+• 32% des mises à jour
+concernent la biométrie.
+895
+19271
+889
+660
+9090
+5786
+10194
+• 32% des mises à jour
+concernent le numéro de GSM.
+8468
+788
+11378
+8543 577 868
+8893
+6839
+476
+496
+5754
+4/20/2026 4/27/2026 5/4/2026 5/11/2026
+MAJ données Biométriques MAJ tuteurs MAJ Téléphone MAJ adresse MAJ données démographiques
+DOCUMENT STRICTEMENT CONFIDENTIEL – DIFFUSION INTERDITE 6
+----- PAGE 7 TEXT -----
+INSCRIPTION DES MINEURS ORPHELINS ET ABANDONNÉS RÉSIDANTS DANS LES EPS
+# Mineurs partagés par le DS
+(l'objectif)
+Mineurs inscrits au RNP avant
+l'envoi de la circulaire
+Mineurs à inscrire au RNP après
+l'envoi de la circulaire Evolution après l'envoi de la circulaire Evolution globale
+4 840 2 616 2 224 33% 69%
+Problème rencontrés :
+1. Certaines provinces n’ont pas d’EPS chargé de l’hébergement des enfants orphelins et abandonnés : Ain chock, Zagora
+2. Attente de documents nécessaires à l’inscription (Actes de naissance, décision juridique de tutorat)
+3. Erreurs matérielles sur les documents ( nom de famille)
+4. Certains enfants sont inscrits avec leurs familles et bénéficient des ASD
+5. Des inscription, dont l’adresse n’est pas un EPS, ne s’affichent pas au niveau du suivi (AL FIDA MERS SULTAN,BERRECHID,
+JERADA, LAAYOUNE) :
+• 170 / 645 EPS reçus du développement social sont introuvables sur le SGDAE
+1. Demander aux PP de compléter la saisie des EPS partagés par le DS
+2. Partager les mineurs inscrits avec le même tuteur (plus de 5 mineurs) pour mise à jour de l’adresse: 109 cas
+DOCUMENT STRICTEMENT CONFIDENTIEL – DIFFUSION INTERDITE 7
+----- PAGE 8 TEXT -----
+SYSTÈME DE GESTION ANTI-FRAUDE
+# Elément/
+Projet
+Date cible
+Durée Actions planifiées Réalisations Global
+% Avt
+% Avt
+hebdo
+Prochaines étapes
+(Actions à venir)
+1
+Nouveau SI
+gestion anti-
+fraude
+(Projet DUE )
+4T27
+1. Cadrage,
+planification
+2. Etat des lieux
+3. Benchmark
+4. Conception du
+système
+5. Implémentatio
+n agile
+1. Planning détaillé livré
+2. Etat des lieux livré
+3. Benchmark fraude en cours (7 fiches pays
+partagée par la BM)
+4. Comité de pilotage tenu le 16/4
+5. Conception globale SI anti-fraude terminée
+6. Conception détaillée SI terminée (90%)
+7. Formules des 2 indices de risques élaborées
+et intégrées dans la conception détaillée (2
+indices fusionnés en un seul indice)
+8. Mise en œuvre du sprint 1 du MVP entamée
+(10%)
+38% 2%
+1. Valider le livrable état des lieux
+2. Continuer le benchmark fraude avec la BM
+(Espagne /Portugal /Turquie)
+3. Tester et valider l’indice de risque de fraude sur
+la plateforme Berexia
+4. 5. Valider la conception détaillée du SI
+Finaliser la mise en œuvre du sprint 1 du MVP
+11 Mai
+----- PAGE 9 TEXT -----
+SUIVI DES PROJETS RSU
+# Elément/ Projet Date cible
+Durée Actions planifiées 2 Refonte RSU
+(RSU 2.0)
+15 mois
+À partir
+du kick off
+1. Elaboration CDC du projet
+2. Consultations(AO/Sélection
+prestataire)
+3. Exécution marché
+Réalisations 1. Elaboration d’une fiche détaillée
+précisant principales
+améliorations / fonctionnalités
+(le 05/12)
+Global
+% Avt
+30% % Avt
+hebdo
+0% Prochaines étapes
+(Actions à venir)
+1. Actualiser la feuille de route du projet
+(30/6)
+----- PAGE 10 TEXT -----
+BACKLOG DÉVELOPPEMENT RSU
+# Elément/ Projet Date cible Actions planifiées Réalisations 1
+Verrouiller la mise à
+jour des
+caractéristiques /
+variables permanentes
+RSU
+Sem.
+25/5
+1. Conception
+2. Développement
+3. Test
+4. Déploiement
+1. Dév. et tests terminés pour le mode de
+dépôt on-line (100%)
+2. Cadrage du mode offline terminé
+3. Dév. mode off-line en cours
+2 Cryptage des données
+sur le FO
+Sem.
+03/03
+23/4
+25/5
+1. Conception
+2. Développement
+3. Test
+4. Déploiement
+1. Mise en œuvre et test cryptage et
+décryptage terminés
+2. Script de benchmarking prêt
+3. Captcha du FO enlevé par l’équipe RSU
+pour lancer le benchmarking
+3
+Migration de Liferay
+vers des pages
+statiques (DMS)
+Sem.
+30/3
+30/4
+25/5
+▪ Pages statiques déployées
+▪ DMS: Dev finalisé
+▪ régressions prises en charge
+▪ Tests de non régression en cours
+% Avt
+Global
+65% 90%
+97% % Avt
+Hebdo
+15%
+Stand By
+chez
+équipe
+système
+0%
+Prochaines étapes
+(Actions à venir)
+1. Mise en œuvre du mode offline
+en cours
+2. Déployer le module
+1. Mobiliser l’équipe système pour
+préparer l’environnement de test
+de performance
+2. Déployer la version FO avec
+cryptage de données
+1. Finaliser les tests de non
+régression
+2. Réaliser les tests de performance
+3. Déploiement (sem. 25/5)
+----- PAGE 11 TEXT -----
+SUIVI DES PROJETS RNP
+# Elément/ Projet Date cible
+Durée Actions planifiées 1
+Extension capacité
+Data Centers et
+lancement des
+marchés de
+maintenance
+Sep. 26
+1. Evaluation des besoins
+2. Dimensionnement infra
+3. Conception et
+planification
+4. Mise en œuvre
+2 Sécurité Stand By
+▪ Rajouter nouveau use case
+pour détecter les PS
+désactivés qui tentent
+d’invoquer l’API RSU
+(@RNP/RSU)
+3
+Notifications chefs
+de ménages pour les
+MàJ du RNP
+Sem.
+18/5
+▪ Cadrage de l’évolution
+▪ Conception
+▪ Mise en œuvre
+▪ Déploiement
+4
+Conventions
+d’échanges avec
+MOSIP et UM6P
+Mai 26
+1. Signer le nouvel MoU
+MOSIP avec IIIT-B
+2. Finaliser la convention
+MI-UM6P ( contributions
+financières pour le centre
+d’excellence des 3
+parties)
+Réalisations 1. Etude de la maintenance et de la
+mise à niveau de la plateforme RNP
+en cours (état des lieux, plan
+d’action)
+2. Préparation de l’AOO de la
+maintenance des serveurs de
+PowerEdge
+1. Désactivation dans le RSU des
+comptes des PS inactifs (Minhaty,
+Cantines scolaires, Panier Ramadan)
+2. Script d’envoi des logs WAF vers le
+SIEM développé
+1. Dév. terminé de la nouvelle
+fonctionnalité 1. 2. MoU revu et retourné par MOSIP
+Projet Annexes MoU UM6P élaboré
+3. MoU UM6P : estimations
+contributions financières
+préliminaires établies
+4. Première réunion de négo. Avec
+UM6P tenue le 28/4
+5. Relances UM6P effectuées
+Global
+% Avt
+50% 50% 95% 100% 90% % Avt
+Hebdo
+5%
+0%
+15%
+0%
+10%
+Prochaines étapes
+(Actions à venir)
+• Finaliser et valider l’étude
+• Finaliser l’AOO de maintenance de serveurs
+PowerEdge.
+• Finaliser l’avenant du contrat de maintenance de la
+plateforme RNP pour inclure la maintenance du
+marché de l’extension + défalquer les prix de la
+maintenance RNP en cours par matériel/solution.
+• Lancer l’étude de changement de VMWare par Nutanix
+• Etablir la FdR
+• Préparer les AO
+• Mobiliser l’équipe système pour activer l’API RSU
+• Mettre en place le Use Case dans le SIEM
+• Réaliser les tests
+• Déployer la nouvelle version
+▪ Poursuivre la négociation avec UM6P après retour sur
+la première proposition
+▪ Arrêter la contribution financière du MI, MOSIP et
+UM6P.
+▪ Valider et signer la convention avec UM6P
+▪ Valider et signer la convention avec MOSIP
+----- PAGE 12 TEXT -----
+BACKLOG DÉVELOPPEMENT RNP
+# Elément/ Projet Date
+cible Actions planifiées Réalisations 1
+Validation des
+appels des PS au
+RSU par le RNP
+(via token)
+Sem.
+02/03
+Stand By
+1. Conception
+2. Développement
+3. Tests
+4. Mise en production
+1. Dév. terminée : version tenant compte
+l’authentification RNP/DGSN en online/offline
+2. Code source AU de test (AMO-Tadamon) mis
+à jour.
+3. Test de l’AU effectuée par équipe AMOT
+4. 5. Données de test RSU préparés
+Test dans l’environnement de test avec les
+données de test RSU non concluants
+2
+Echanges de
+données RNP/RSU
+et DGSN
+Sem.
+16/2
+13/4
+4/5
+1. Récupération
+adresse CNIE auprès
+de la DGSN
+1. Dév. terminés
+2. 4. 5. Tests échanges @ CNIE terminés
+3. Plateforme de production mise en place
+Analyser qualité des @CNIE terminée
+Règles de gestion de prise en charge des
+@CNIE reçues de la CNIE établies
+3
+Echanges de
+données RNP/RSU
+et DGSN
+Sem.
+16/2
+13/4
+4/5
+1. Envoi données
+RNP/RSU à la DGSN 1. Dév. terminés
+2. Tests échanges données RNP/RSU terminés 1. Conception
+2. Développement
+3. Tests
+4. Mise en production
+5
+Synchronisation
+du référentiel de
+découpage
+administratif RNP
+avec le RSU
+Sem
+06/04
+13/4
+4/5
+1. Déploiement de la partie serveur du
+référentiel sur la plateforme MI
+2. Déploiement de la partie client de synchro. du
+référentiel sur la plateforme ANR
+3. Insertion des données de màj du référentiel
+dans le référentiel RSU avec succès
+4. Tests RSU terminés
+5. Module ‘integration logging dans le code
+source’ réalisé et déployé sur la prod.
+Global
+% Avt
+90% 100% 50% 97% % Avt
+Hebdo
+0%
+0%
+0%
+2%
+Prochaines étapes
+(Actions à venir)
+• Mobiliser l’équipe système pour
+prendre en charge les
+dysfonctionnements identifiés.
+• Flux récupération @CNIE terminé et
+déployé
+• Appliquer les règles de qualité de
+données dans la production
+Résoudre les problèmes résiduels du
+flux RNP/RSU chez la DGSN
+▪ Corriger les problèmes résiduels sur
+la prod.
+▪ Redéployer le module
+----- PAGE 13 TEXT -----
+SUIVI ASSISTANCE TECHNIQUE BM
+# Elément
+Projet
+Date cible
+Durée Actions planifiées Réalisations 1
+Etude la de
+la volatilité
+du score RSU
+Juil. 26
+1. Analyse des données RSU
+2. Modélisation de la
+volatilité
+3. Développer simulation
+pour scénarios
+atténuation volatilité
+4. Reco. pour atténuer la
+volatilité
+1. Note de cadrage élaborée
+2. Données RSU fournies (10% de la base)
+3. Premier simulateur développé
+4. Atelier de restitution note de cadrage tenue le
+25/3 en présence de la BM
+5. 6. 7. Note de cadrage étude validée
+VM pour la simulation du modèle prête
+Outils et données RSU installés sur la VM de
+simulation
+2
+Evaluation
+du processus
+RSU
+Juil. 26
+1. Modèle conceptuel de
+l’évaluation
+2. Collecte de données pour
+l’évaluation
+3. Tracer le processus du
+point de vue citoyen et
+administration
+4. Résultats de l’évaluation
+5. Recommandations pour
+améliorer l’efficacité,
+l’inclusion et le monitoring
+1. 2. 3. 4. 5. Cadre conceptuel et KPI élaborés
+Grille d’analyse et d’évaluation validée
+Guide d’analyse (schéma de codage) réalisé
+Collecte des preuves (tickets CRM, textes de loi,
+organigramme, ) pour l’analyse réalisée
+Analyse des processus actuels à la lumière de
+preuves collectées
+Global
+% Avt
+70% 50% % Avt
+Hebdo
+0% 10%
+Prochaines étapes
+(Actions à venir)
+1. Dérouler le modèle de simulation
+sur les données RSU réelles
+2. Restitution des premiers
+résultats (sem. 1/6 – 1 journée de
+travail en présence de la BM et des
+consultants)
+1. Valider le guide d’analyse par la
+BM
+2. Organiser les entretiens
+d’évaluation de process avec les
+membres de l’UGP
+3. Plateforme d’analyse de process
+(As-Is, Should-be, Gap, Progress)
+----- PAGE 14 TEXT -----
+PROJET PICPPS II
+# Elément/
+Projet
+Date
+cible/
+Durée
+Actions planifiées 1
+PICPPS II Sem.
+2 Mar
+1. Mission de supervision
+no.1
+2. Finalisation MOP
+3. Finalisation premier
+rapport semestriel SES
+4. Finaliser PTAB 2026
+5. Recrutement spécialiste
+PM
+2
+Audit IGF
+PICPPS II 2T26
+Réalisations 1. 2. 3. 4. 5. MOP validée par la BM 11/5/2026
+Mission de supervision no. 1 du 24 au 27 Mars
+2026 terminée
+Aide-mémoire mission de supervision no. 1 reçu
+et est en cours de revue par l’UGP
+Draft 2 rapport SES en cours de finalisation
+(Instruction des stats sur les plaintes RNP et RSU
+2S25)
+Plan de travail annuel et de budget (PTAB) 2026
+en cours de validation
+• Mission lancée le 30/3 à 10h30
+• Liste préliminaire des docs traitée (19 documents)
+• Une deuxième liste de documents traitée (10
+documents)
+• Réunion de travail avec la mission tenue le mardi
+28 à 11h
+• Version MOP validée transmise le 11/5
+• 4 derniers documents demandés transmis à l’IGF le
+11/5 ( 3 docs financiers et rapport de clôture
+PICPPS I)
+% Avt
+Global
+100%
+100%
+90%
+100%
+90%
+70%
+% Avt
+Hebdo
+10%
+0%
+10%
+30%
+Prochaines étapes
+(Actions à venir)
+1. Validation aide-mémoire mission de
+supervision no. 1
+2. Lancer la certification des CBP
+atteints
+3. Affiner les stats RSU sur les plaintes
+pour le premier rapport SES
+4. Valider le 1er rapport SES par la BM
+5. Finaliser le PTAB 2026
+• Réception rapport provisoire d’audit
+----- PAGE 15 TEXT -----
+ASSITANCE TECHNIQUE DUE – STRATEGIE DE COM.
+# Elément/
+Projet
+Date cible
+Durée Actions planifiées Réalisations Global
+% Avt
+3
+Stratégie de
+com. RNP/RSU
+(Projet DUE )
+4T27
+1. État des lieux,
+2. Stratégie et feuille de route.
+3. Campagnes thématiques.
+4. Revue des portails RSU/RNP
+1. Comité de suivi no.1 tenu le 15/1
+2. Etat des lieux et benchmarking livré
+3. Refonte portail RSU en cours
+4. Elaboration TdB en cours
+5. Elaboration stratégie de com. en cours
+6. Rapport semestriel projet initié
+42% % Avt
+période
+0%
+Prochaines étapes
+(Actions à venir)
+• Continuer la refonte du portail RSU
+• Continuer l’élaboration des TdB
+• Actualiser la stratégie de com (30/5)
+----- PAGE 16 TEXT -----
+MERCI
+----- PAGE 17 TEXT -----
+SYSTÈME DE GESTION ANTI-FRAUDE
+18 Mai
+----- PAGE 18 TEXT -----
+ASSITANCE TECHNIQUE DUE – STRATEGIE DE COM.
+18 Mai
+----- PAGE 19 TEXT -----
+SUIVI ASSISTANCE TECHNIQUE BM – ETUDE DE LA VOLATILITE
+18 Mai
+----- PAGE 20 TEXT -----
+SUIVI ASSISTANCE TECHNIQUE BM – EVALUATION DE PROCESSUS RSU
+18 Mai

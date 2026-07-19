@@ -15,6 +15,7 @@ from auth.router import router as auth_router
 from boards.registry import discover_boards
 from boards.router import router as boards_router
 from config import settings
+from data_platform.router import router as data_platform_router
 from db.models import Board, User
 from db.session import SessionLocal
 from reports.routes import router as reports_router
@@ -28,6 +29,14 @@ BOARDS_SEED: list[dict[str, Any]] = [
         "description": (
             "Tableau de bord hebdomadaire de suivi RSU: inscriptions, "
             "traitement FMS, flux ASD, ménages bloqués."
+        ),
+    },
+    {
+        "slug": "programmes-sociaux-rescoring",
+        "title": "Programmes sociaux / Rescoring",
+        "description": (
+            "Suivi des programmes sociaux depuis la source CSV RSU: éligibilité, "
+            "entrées/sorties de seuil, volatilité et lecture territoriale."
         ),
     },
 ]
@@ -73,7 +82,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[settings.web_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,6 +92,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(boards_router)
 app.include_router(reports_router)
+app.include_router(data_platform_router)
 
 for spec in discover_boards().values():
     app.include_router(spec.router, prefix=f"/api/boards/{spec.slug}")

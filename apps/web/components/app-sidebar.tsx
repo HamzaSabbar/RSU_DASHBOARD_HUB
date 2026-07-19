@@ -17,6 +17,12 @@ import { cn } from "@/lib/utils";
 
 const boardLinks = [
   { href: "/dashboard/macro-national", label: "Macro National", icon: LineChart, ready: true },
+  {
+    href: "/dashboard/programmes-sociaux-rescoring",
+    label: "Programmes sociaux",
+    icon: BarChart3,
+    ready: false,
+  },
 ];
 
 export function AppSidebar({

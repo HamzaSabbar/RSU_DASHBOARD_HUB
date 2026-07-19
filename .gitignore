@@ -15,6 +15,13 @@ venv/
 .DS_Store
 data/uploads/*
 !data/uploads/.gitkeep
+# Local copy of the Julia RSU example datasets. Keep the documentation tracked,
+# but do not commit the imported CSV/Arrow data files.
+data/julia-rsu/raw/*
+data/julia-rsu/prepared/*
+# Generated immutable analytical releases (DuckDB, Parquet, Arrow, manifests).
+data/analytics/*
+!data/analytics/.gitkeep
 inputs/
 output/
 dist/

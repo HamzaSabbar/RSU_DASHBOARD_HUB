@@ -1,7 +1,7 @@
 services:
   db:
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5433}:5432"
 
   api:
     build:
@@ -14,8 +14,9 @@ services:
       - ./apps/api:/app
       - ./data/uploads:/data/uploads
       - ./data/storage:/data/storage
+      - ./data/analytics:/data/analytics:ro
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8100}:8000"
 
   worker:
     build:
@@ -27,6 +28,17 @@ services:
       - ./apps/api:/app
       - ./data/uploads:/data/uploads
       - ./data/storage:/data/storage
+
+  analytics-worker:
+    build:
+      target: api-builder
+    entrypoint: ["python", "-m", "data_platform.worker"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./apps/api:/app
+      - ./data/julia-rsu/raw:/data/rsu-source:ro
+      - ./data/analytics:/data/analytics
 
   web:
     build:

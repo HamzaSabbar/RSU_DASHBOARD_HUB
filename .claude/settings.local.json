@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(docker compose exec -T api python -c ' *)",
+      "Bash(docker compose *)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

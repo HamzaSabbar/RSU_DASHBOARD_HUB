@@ -169,6 +169,204 @@ class ReportJob(Base):
     )
 
 
+class DataSourceBatch(Base):
+    """One immutable client CSV delivery and its asynchronous build state."""
+
+    __tablename__ = "data_source_batches"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    source_key: Mapped[str] = mapped_column(String(64), nullable=False, default="rsu-csv")
+    source_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    pipeline_version: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    parameters_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="queued", index=True)
+    stage: Mapped[str] = mapped_column(String(64), nullable=False, default="queued")
+    progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('queued', 'running', 'succeeded', 'failed')",
+            name="data_source_batches_status_check",
+        ),
+        CheckConstraint(
+            "progress >= 0 AND progress <= 100",
+            name="data_source_batches_progress_check",
+        ),
+    )
+
+
+class DataSourceFile(Base):
+    __tablename__ = "data_source_files"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    batch_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("data_source_batches.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    logical_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    relative_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    byte_size: Mapped[int] = mapped_column(Numeric(20, 0), nullable=False)
+    row_count: Mapped[int | None] = mapped_column(Numeric(20, 0), nullable=True)
+    required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    schema_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    profile_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    __table_args__ = (
+        UniqueConstraint("batch_id", "logical_name", name="data_source_files_batch_name_uq"),
+    )
+
+
+class CoreDatasetVersion(Base):
+    __tablename__ = "core_dataset_versions"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    batch_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("data_source_batches.id", ondelete="RESTRICT"), nullable=False, unique=True
+    )
+    version_key: Mapped[str] = mapped_column(String(160), nullable=False, unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="building", index=True)
+    dataset_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    database_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    manifest_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    row_counts_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    period_start: Mapped[date | None] = mapped_column(Date, nullable=True)
+    period_end: Mapped[date | None] = mapped_column(Date, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('building', 'ready', 'failed')",
+            name="core_dataset_versions_status_check",
+        ),
+    )
+
+
+class DataProductBuild(Base):
+    __tablename__ = "data_product_builds"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    core_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core_dataset_versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    product_slug: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    product_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="building", index=True)
+    artifact_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    row_counts_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('building', 'ready', 'failed')",
+            name="data_product_builds_status_check",
+        ),
+        UniqueConstraint(
+            "core_version_id", "product_slug", "product_version",
+            name="data_product_builds_version_uq",
+        ),
+    )
+
+
+class DatasetArtifact(Base):
+    __tablename__ = "dataset_artifacts"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    core_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core_dataset_versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    product_build_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("data_product_builds.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    layer: Mapped[str] = mapped_column(String(32), nullable=False)
+    artifact_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    format: Mapped[str] = mapped_column(String(16), nullable=False)
+    relative_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    byte_size: Mapped[int] = mapped_column(Numeric(20, 0), nullable=False)
+    row_count: Mapped[int | None] = mapped_column(Numeric(20, 0), nullable=True)
+    schema_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "core_version_id", "artifact_name", name="dataset_artifacts_core_name_uq"
+        ),
+    )
+
+
+class DatasetQualityCheck(Base):
+    __tablename__ = "dataset_quality_checks"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    batch_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("data_source_batches.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    core_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("core_dataset_versions.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    check_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    passed: Mapped[bool] = mapped_column(Boolean, nullable=False, index=True)
+    observed_value: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    expected_value: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    details_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "severity IN ('info', 'warning', 'error')",
+            name="dataset_quality_checks_severity_check",
+        ),
+        UniqueConstraint("batch_id", "check_key", name="dataset_quality_checks_batch_key_uq"),
+    )
+
+
+class PlatformRelease(Base):
+    __tablename__ = "platform_releases"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    release_key: Mapped[str] = mapped_column(String(160), nullable=False, unique=True, index=True)
+    core_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core_dataset_versions.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    products_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    published_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index(
+            "ix_platform_releases_single_active",
+            "is_active",
+            unique=True,
+            postgresql_where=is_active.is_(True),
+        ),
+    )
+
+
 class ReportUploadBatch(Base):
     __tablename__ = "report_upload_batches"
 
