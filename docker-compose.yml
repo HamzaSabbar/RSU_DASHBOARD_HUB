@@ -17,7 +17,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
       target: api-runtime
     restart: unless-stopped
     depends_on:
@@ -54,7 +54,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
       target: api-runtime
     restart: unless-stopped
     depends_on:
@@ -80,7 +80,7 @@ services:
   analytics-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
       target: api-runtime
     restart: unless-stopped
     depends_on:
@@ -106,7 +106,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.web
       target: web-runner
     restart: unless-stopped
     depends_on:
