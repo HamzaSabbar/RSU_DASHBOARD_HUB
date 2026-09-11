@@ -13,15 +13,6 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
-data/uploads/*
-!data/uploads/.gitkeep
-# Local copy of the Julia RSU example datasets. Keep the documentation tracked,
-# but do not commit the imported CSV/Arrow data files.
-data/julia-rsu/raw/*
-data/julia-rsu/prepared/*
-# Generated immutable analytical releases (DuckDB, Parquet, Arrow, manifests).
-data/analytics/*
-!data/analytics/.gitkeep
 inputs/
 output/
 dist/
@@ -30,3 +21,14 @@ playwright-report/
 test-results/
 .next-env.d.ts
 tsconfig.tsbuildinfo
+# Runtime RSU KPI imports (do not commit real/confidential data)
+data/imports/runtime/
+data/imports/uploads/
+*.kpi-import.tmp
+
+# Keep only the synthetic seed workbook if repository policy allows it.
+# If the repository is public or synthetic data must not be committed, ignore seed too:
+# data/imports/seed/*.xlsx
+
+# Standalone local Postgres cluster used to run the app locally.
+.pgdata_local/

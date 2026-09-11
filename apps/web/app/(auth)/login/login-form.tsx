@@ -62,7 +62,7 @@ export function LoginForm(): React.ReactElement {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="directeur@macro-national.gov.ma"
+              placeholder="pilotage@rsu.gov.ma"
               {...register("email")}
               aria-invalid={errors.email ? "true" : undefined}
             />

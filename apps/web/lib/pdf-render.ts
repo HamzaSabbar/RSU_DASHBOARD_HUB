@@ -1,10 +1,6 @@
 import type { NextRequest } from "next/server";
 import { chromium } from "playwright";
-import type { DashboardChartId } from "@/lib/dashboard-export";
-
-type RenderOptions = {
-  chartId?: DashboardChartId;
-};
+import type { DashboardViewId } from "@/lib/dashboard-export";
 
 export class PdfRenderError extends Error {
   constructor(
@@ -18,15 +14,13 @@ export class PdfRenderError extends Error {
 
 export async function renderDashboardPdf(
   req: NextRequest,
-  options: RenderOptions = {},
+  view: DashboardViewId,
 ): Promise<Buffer> {
-  const target = printUrl(req, options.chartId);
+  const target = printUrl(req, view);
   const browser = await launchBrowser();
   try {
     const context = await browser.newContext({
-      viewport: options.chartId
-        ? { width: 1122, height: 794 }
-        : { width: 794, height: 1122 },
+      viewport: { width: 1122, height: 794 },
       deviceScaleFactor: 1,
       extraHTTPHeaders: renderHeaders(req),
     });
@@ -45,49 +39,9 @@ export async function renderDashboardPdf(
     await page.waitForTimeout(800);
     return await page.pdf({
       format: "A4",
-      landscape: Boolean(options.chartId),
+      landscape: true,
       printBackground: true,
-      margin: options.chartId
-        ? { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" }
-        : { top: "0", right: "0", bottom: "0", left: "0" },
-    });
-  } catch (error) {
-    throw normalizePdfError(error, target);
-  } finally {
-    await browser.close();
-  }
-}
-
-export async function renderDashboardChartPng(
-  req: NextRequest,
-  chartId: DashboardChartId,
-): Promise<Buffer> {
-  const target = printUrl(req, chartId);
-  const browser = await launchBrowser();
-  try {
-    const context = await browser.newContext({
-      viewport: { width: 1200, height: 760 },
-      deviceScaleFactor: 2,
-      extraHTTPHeaders: renderHeaders(req),
-    });
-    const page = await context.newPage();
-    const response = await page.goto(target.toString(), {
-      waitUntil: "domcontentloaded",
-      timeout: 60_000,
-    });
-    if (!response?.ok()) {
-      throw new Error(`Print route returned ${response?.status() ?? "no response"}`);
-    }
-    assertNotLoginPage(page.url());
-    await page.waitForSelector('[data-export-ready="true"]', { timeout: 30_000 });
-    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => undefined);
-    const chart = page.locator('[data-chart-export-target="true"]').first();
-    await chart.waitFor({ state: "visible", timeout: 30_000 });
-    await page.waitForTimeout(800);
-    return await chart.screenshot({
-      type: "png",
-      animations: "disabled",
-      omitBackground: false,
+      margin: { top: "10mm", right: "8mm", bottom: "10mm", left: "8mm" },
     });
   } catch (error) {
     throw normalizePdfError(error, target);
@@ -112,21 +66,9 @@ async function launchBrowser(): ReturnType<typeof chromium.launch> {
 }
 
 export function pdfExportErrorMessage(error: unknown): string {
-  return exportErrorMessage(error, "PDF");
-}
-
-export function pngExportErrorMessage(error: unknown): string {
-  return exportErrorMessage(error, "PNG");
-}
-
-function exportErrorMessage(error: unknown, format: "PDF" | "PNG"): string {
-  const message =
-    error instanceof PdfRenderError
-      ? error.message
-      : error instanceof Error
-        ? normalizePdfError(error).message
-        : "Export PDF impossible: erreur inconnue pendant la génération.";
-  return message.replace(/^Export PDF impossible:/, `Export ${format} impossible:`);
+  if (error instanceof PdfRenderError) return error.message;
+  if (error instanceof Error) return normalizePdfError(error).message;
+  return "Export PDF impossible: erreur inconnue pendant la génération.";
 }
 
 function normalizePdfError(error: unknown, target?: URL): PdfRenderError {
@@ -177,14 +119,15 @@ function normalizePdfError(error: unknown, target?: URL): PdfRenderError {
   );
 }
 
-function printUrl(req: NextRequest, chartId?: DashboardChartId): URL {
+function printUrl(req: NextRequest, view: DashboardViewId): URL {
   const base = pdfRenderBaseUrl(req);
-  const url = new URL("/dashboard/macro-national/print", base);
-  const startDate = req.nextUrl.searchParams.get("startDate");
-  const endDate = req.nextUrl.searchParams.get("endDate");
-  if (startDate) url.searchParams.set("startDate", startDate);
-  if (endDate) url.searchParams.set("endDate", endDate);
-  if (chartId) url.searchParams.set("chartId", chartId);
+  const url = new URL("/dashboard/kpi/print", base);
+  url.searchParams.set("view", view);
+  const passthrough = ["start_date", "end_date", "region", "province", "milieu"];
+  for (const key of passthrough) {
+    const value = req.nextUrl.searchParams.get(key);
+    if (value) url.searchParams.set(key, value);
+  }
   return url;
 }
 

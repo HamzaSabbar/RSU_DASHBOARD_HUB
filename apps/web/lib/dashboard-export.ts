@@ -1,14 +1,12 @@
-export const DASHBOARD_CHARTS = {
-  "rsu-inscriptions": "Inscriptions RSU / RNP",
-  "asd-entrees-sorties": "Entrées et sorties ASD",
-  "fms-matrice-risque": "Matrice de risque FMS",
-  "menages-bloques-national": "Ménages bloqués - national",
-  "flux-regionaux": "Flux régionaux",
-  "menages-bloques-regionaux": "Ménages bloqués - régional",
-} as const;
+import { KPI_SECTIONS } from "@/lib/kpi-sections";
 
-export type DashboardChartId = keyof typeof DASHBOARD_CHARTS;
+export const DASHBOARD_VIEWS: Record<string, string> = {
+  overview: "Vue d'ensemble",
+  ...KPI_SECTIONS,
+};
 
-export function isDashboardChartId(value: string): value is DashboardChartId {
-  return value in DASHBOARD_CHARTS;
+export type DashboardViewId = keyof typeof DASHBOARD_VIEWS;
+
+export function isDashboardViewId(value: string): value is DashboardViewId {
+  return value in DASHBOARD_VIEWS;
 }
