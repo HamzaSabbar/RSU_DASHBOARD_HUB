@@ -27,7 +27,7 @@ The final product must:
 - `docs/BRAND_UI_SPEC.md` — RSU design system constraints to preserve.
 - `docs/API_IMPORT_SPEC.md` — API + persistent import behavior.
 - `docs/TEST_ACCEPTANCE.md` — test plan and definition of done.
-- `data/imports/seed/Donnees_synthetiques_22_KPI_RSU_FINAL.xlsx` — seed workbook.
+- `data/imports/seed/Donnees_synthetiques_kpi_VF.xlsx` — seed workbook.
 
 ## How to use
 

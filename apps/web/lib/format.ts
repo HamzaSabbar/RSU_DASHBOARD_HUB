@@ -25,6 +25,10 @@ export function formatPercent(value: number | null | undefined): string {
   return `${sign}${replaceDecimalSeparator(value.toFixed(1))}%`;
 }
 
+export function formatPeriodLabel(isoDate: string): string {
+  return formatMonth(isoDate.slice(0, 7));
+}
+
 export function formatMonth(ym: string): string {
   const [year, month] = ym.split("-");
   if (!year || !month) return ym;

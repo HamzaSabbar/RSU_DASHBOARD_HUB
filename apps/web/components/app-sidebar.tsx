@@ -3,26 +3,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Bell,
-  ChevronRight,
+  BellRing,
+  ClipboardList,
+  DoorOpen,
   LayoutDashboard,
-  LineChart,
-  Search,
-  Settings,
+  MessageSquareWarning,
+  RefreshCcw,
+  ShieldCheck,
+  ShieldQuestion,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { ImportDataDialog } from "@/components/kpi/import-data-dialog";
 import { UserMenu } from "@/app/(app)/user-menu";
 import { cn } from "@/lib/utils";
 
-const boardLinks = [
-  { href: "/dashboard/macro-national", label: "Macro National", icon: LineChart, ready: true },
+const sectionLinks = [
+  { href: "/dashboard/acces", label: "Accès", icon: DoorOpen },
+  { href: "/dashboard/inscription", label: "Inscription", icon: ClipboardList },
   {
-    href: "/dashboard/programmes-sociaux-rescoring",
-    label: "Programmes sociaux",
-    icon: BarChart3,
-    ready: false,
+    href: "/dashboard/fiabilisation-sources",
+    label: "Fiabilisation des sources",
+    icon: ShieldCheck,
   },
+  { href: "/dashboard/maj-rescoring", label: "Mise à jour & rescoring", icon: RefreshCcw },
+  { href: "/dashboard/notification", label: "Notification", icon: BellRing },
+  {
+    href: "/dashboard/recours-reclamations",
+    label: "Recours & réclamations",
+    icon: MessageSquareWarning,
+  },
+  { href: "/dashboard/controle-qualite", label: "Contrôle qualité", icon: ShieldQuestion },
 ];
 
 export function AppSidebar({
@@ -37,47 +48,34 @@ export function AppSidebar({
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-brand-border bg-brand-surface lg:flex">
-        <div className="flex h-14 items-center justify-between border-b border-brand-border px-4">
-          <Link href="/dashboard" aria-label="RSU Dashboard Hub">
+        <div className="flex h-14 items-center border-b border-brand-border px-4">
+          <Link href="/dashboard" aria-label="RSU KPI">
             <BrandMark />
           </Link>
-          <ChevronRight className="h-4 w-4 text-brand-ink" aria-hidden />
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-brand-muted" />
-            <input
-              type="search"
-              placeholder="Rechercher..."
-              className="h-8 w-full rounded-md border border-brand-border bg-white pl-9 pr-10 text-xs text-brand-ink outline-none placeholder:text-brand-muted focus:border-brand-primary"
-            />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-brand-border px-1.5 py-0.5 text-[10px] leading-none text-brand-muted">
-              K
-            </span>
-          </div>
-
-          <nav className="mt-5 space-y-5">
-            <NavGroup label="Espace">
+          <nav className="space-y-5">
+            <NavGroup label="Pilotage RSU">
               <SidebarLink
                 href="/dashboard"
-                label="Hub"
+                label="Vue d'ensemble"
                 icon={LayoutDashboard}
                 active={pathname === "/dashboard"}
               />
-            </NavGroup>
-
-            <NavGroup label="Tableaux de bord">
-              {boardLinks.map((item) => (
+              {sectionLinks.map((item) => (
                 <SidebarLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
                   icon={item.icon}
                   active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
-                  ready={item.ready}
                 />
               ))}
+            </NavGroup>
+
+            <NavGroup label="Données">
+              <ImportDataDialog />
             </NavGroup>
 
             {role === "admin" ? (
@@ -85,7 +83,7 @@ export function AppSidebar({
                 <SidebarLink
                   href="/admin"
                   label="Administration"
-                  icon={Settings}
+                  icon={Bell}
                   active={pathname === "/admin"}
                 />
               </NavGroup>
@@ -99,7 +97,7 @@ export function AppSidebar({
       </aside>
 
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-brand-border bg-brand-surface px-4 lg:hidden">
-        <Link href="/dashboard" aria-label="RSU Dashboard Hub">
+        <Link href="/dashboard" aria-label="RSU KPI">
           <BrandMark compact />
         </Link>
         <div className="flex items-center gap-3">
@@ -133,13 +131,11 @@ function SidebarLink({
   label,
   icon: Icon,
   active,
-  ready,
 }: {
   href: string;
   label: string;
-  icon: typeof BarChart3;
+  icon: typeof LayoutDashboard;
   active?: boolean;
-  ready?: boolean;
 }): React.ReactElement {
   return (
     <Link
@@ -153,11 +149,6 @@ function SidebarLink({
     >
       <Icon className="h-4 w-4 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      {ready ? (
-        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-primary">
-          Actif
-        </span>
-      ) : null}
     </Link>
   );
 }

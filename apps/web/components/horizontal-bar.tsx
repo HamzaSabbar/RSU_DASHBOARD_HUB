@@ -19,11 +19,13 @@ export function HorizontalBarChart({
   labelKey,
   series,
   height = 320,
+  valueFormatter = formatBigNumber,
 }: {
   data: Array<Record<string, number | string>>;
   labelKey: string;
   series: HBarSeries[];
   height?: number;
+  valueFormatter?: (value: number) => string;
 }): React.ReactElement {
   return (
     <div className="w-full" style={{ height }}>
@@ -37,7 +39,7 @@ export function HorizontalBarChart({
           <XAxis
             type="number"
             tick={{ fontSize: 11, fill: "#64748B" }}
-            tickFormatter={(v: number) => formatBigNumber(v)}
+            tickFormatter={(v: number) => valueFormatter(v)}
           />
           <YAxis
             type="category"
@@ -45,10 +47,16 @@ export function HorizontalBarChart({
             tick={{ fontSize: 11, fill: "#64748B" }}
             width={140}
           />
-          <Tooltip formatter={(v: number) => formatBigNumber(v)} />
+          <Tooltip formatter={(v: number) => valueFormatter(v)} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {series.map((s) => (
-            <Bar key={s.dataKey} dataKey={s.dataKey} name={s.name} fill={s.color} />
+            <Bar
+              key={s.dataKey}
+              dataKey={s.dataKey}
+              name={s.name}
+              fill={s.color}
+              isAnimationActive={false}
+            />
           ))}
         </BarChart>
       </ResponsiveContainer>
