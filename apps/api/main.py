@@ -3,43 +3,19 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from auth.hashing import hash_password
 from auth.router import router as auth_router
-from boards.registry import discover_boards
-from boards.router import router as boards_router
 from config import settings
-from data_platform.router import router as data_platform_router
-from db.models import Board, User
+from db.models import User
 from db.session import SessionLocal
-from reports.routes import router as reports_router
+from kpi.router import router as kpi_router
 
 logger = logging.getLogger("uvicorn.error")
-
-BOARDS_SEED: list[dict[str, Any]] = [
-    {
-        "slug": "macro-national",
-        "title": "Macro National",
-        "description": (
-            "Tableau de bord hebdomadaire de suivi RSU: inscriptions, "
-            "traitement FMS, flux ASD, ménages bloqués."
-        ),
-    },
-    {
-        "slug": "programmes-sociaux-rescoring",
-        "title": "Programmes sociaux / Rescoring",
-        "description": (
-            "Suivi des programmes sociaux depuis la source CSV RSU: éligibilité, "
-            "entrées/sorties de seuil, volatilité et lecture territoriale."
-        ),
-    },
-]
 
 
 async def _seed() -> None:
@@ -57,14 +33,6 @@ async def _seed() -> None:
             )
             logger.info("Seeded admin user %s", settings.admin_email)
 
-        for board in BOARDS_SEED:
-            stmt = (
-                pg_insert(Board)
-                .values(**board)
-                .on_conflict_do_nothing(index_elements=["slug"])
-            )
-            await session.execute(stmt)
-
         await session.commit()
 
 
@@ -75,8 +43,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="RSU Dashboard Hub API",
-    version="0.1.0",
+    title="RSU KPI Dashboard API",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -90,12 +58,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router)
-app.include_router(boards_router)
-app.include_router(reports_router)
-app.include_router(data_platform_router)
-
-for spec in discover_boards().values():
-    app.include_router(spec.router, prefix=f"/api/boards/{spec.slug}")
+app.include_router(kpi_router)
 
 
 @app.get("/health")

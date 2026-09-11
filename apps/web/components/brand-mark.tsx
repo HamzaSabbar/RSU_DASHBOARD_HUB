@@ -30,7 +30,7 @@ export function BrandMark({
       </svg>
       <span className="grid leading-none">
         <span className="text-sm font-bold text-brand-ink">
-          rsu-hub<span className="text-[#1f8a5b]">.</span>
+          RSU KPI<span className="text-[#1f8a5b]">.</span>
         </span>
         {!compact ? (
           <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-brand-muted">

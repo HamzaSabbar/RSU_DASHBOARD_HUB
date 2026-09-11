@@ -8,6 +8,7 @@ from alembic import context
 from config import settings
 from db import models  # noqa: F401  (import so metadata is populated)
 from db.base import Base
+from kpi import models as kpi_models  # noqa: F401  (import so metadata is populated)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url_sync)
